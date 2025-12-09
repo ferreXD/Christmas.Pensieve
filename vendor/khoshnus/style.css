@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sevillana&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap');
+
+@font-face {
+    font-family: "BlackCherry";
+    src: url("./public/fonts/BLKCHCRY.TTF");
+}
+
+@font-face {
+    font-family: "Celtic";
+    src: url("./public/fonts/CELTG___.TTF");
+}
+
+@font-face {
+    font-family: "Eutemia";
+    src: url("./public/fonts/Eutemia.ttf");
+}
+
+@font-face {
+    font-family: "Kingthings";
+    src: url("./public/fonts/Kingthings_Calligraphica_Italic.ttf");
+}
+
+@font-face {
+    font-family: "Ruritania";
+    src: url("./public/fonts/Ruritania.ttf");
+}
+
+@font-face {
+    font-family: "VTKS";
+    src: url("./public/fonts/Vtks\ Beautiful\ Dreams.ttf");
+}

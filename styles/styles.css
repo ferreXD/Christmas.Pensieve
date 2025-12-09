@@ -1,0 +1,384 @@
+/* styles.css */
+
+/* Reset b�sico muy suave */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #f5f5f5;
+    overflow: hidden; /* Primera pantalla sin scroll */
+}
+
+/* Canvas de part�culas al fondo */
+#particles {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Contenedor principal */
+.page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    /* Fondo degradado + vi�eteado */
+    background: radial-gradient(circle at top, rgba(212, 175, 55, 0.06), transparent 55%), radial-gradient(circle at bottom, rgba(212, 175, 55, 0.03), transparent 60%), radial-gradient(circle at center, rgba(0, 0, 0, 0.8), #02040a);
+}
+
+/* Cabecera */
+.page__header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.page__label {
+    font-size: 0.85rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #e0dfd8;
+    opacity: 0.8;
+}
+
+/* Contenido central */
+.page__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding-inline: 8px;
+}
+
+.page__handwriting {
+    width: 100%;
+    max-width: 28rem;
+    margin-inline: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page__handwriting-svg {
+    width: 100%;
+    height: 250px; /* tune by feel */
+    display: block;
+}
+
+.page__handwriting-fallback {
+    display: none;
+    max-width: 28rem;
+    margin: 4px auto 0;
+    text-align: center;
+}
+
+.page__line {
+    line-height: 1.4; /* or slightly higher */
+}
+
+/* Primaria un pel�n m�s grande */
+.page__line--primary {
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
+    font-weight: 500;
+}
+
+/* Secundaria m�s suave */
+.page__line--secondary {
+    font-size: clamp(0.95rem, 3.3vw, 1.15rem);
+    color: #d5d5d5;
+    opacity: 0.9;
+}
+
+.page__cta {
+    margin-top: 24px;
+    padding: 10px 12px; /* slightly bigger hitbox */
+    border: none;
+    background: transparent;
+    color: #f5f3e8;
+    font-size: 0.95rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+/* Shown after typewriter finishes */
+.page__cta--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The button's particle canvas */
+.page__cta-particles {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* behind the label */
+    pointer-events: none;
+}
+
+/* Label above particles */
+.page__cta-label {
+    position: relative;
+    z-index: 2;
+    padding-inline: 6px;
+}
+
+    /* Underline that gently �breathes� */
+    .page__cta-label::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 1px;
+        background: linear-gradient( 90deg, rgba(212, 175, 55, 0), rgba(212, 175, 55, 0.85), rgba(212, 175, 55, 0) );
+        transform-origin: center;
+        transform: scaleX(0.4);
+        opacity: 0.8;
+    }
+
+.page__cta--visible .page__cta-label::after {
+    animation: cta-underline-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes cta-underline-pulse {
+    0% {
+        transform: scaleX(0.4);
+        opacity: 0.55;
+    }
+
+    40% {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scaleX(0.4);
+        opacity: 0.55;
+    }
+}
+
+
+/* Footer con la frase */
+.page__footer {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.page__quote {
+    display: block;
+    font-size: 0.8rem;
+    color: #cfcfcf;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 2s ease-out, transform 0.5s ease-out;
+}
+
+.page__quote--visible {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+/* Animaci�n para las l�neas typewriter (el cursor lo manejamos por JS o lo evitamos) */
+.typewriter {
+    white-space: pre-wrap;
+    min-height: 1.2em; /* para que no haya saltos mientras escribe */
+}
+
+/* Si quieres que a partir de cierto ancho se abra un poco el layout */
+@media (min-width: 768px) {
+    .page {
+        padding-inline: 32px;
+    }
+
+    .page__content {
+        gap: 16px;
+    }
+}
+
+
+/* Vials page */
+
+.vial {
+  position: relative;
+  width: 100%;  /* tweak per layout / orbit */
+  aspect-ratio: 70 / 190;
+}
+
+/* Stack glass and canvas */
+.vial__glass,
+.vial__threads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Ensure glass is on top of the threads */
+.vial__glass {
+  z-index: 2;
+}
+
+.vial__threads {
+  z-index: 1;
+}
+
+/* Optional: when focused */
+.vial--focused .vial__glass .vial__body {
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.7));
+}
+
+/* If you blur deemphasized vials, do that on the whole .vial */
+.vial--deemphasized {
+  opacity: 0.45;
+  filter: blur(2px);
+}
+
+.screen--vials {
+  min-height: 100vh;
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #121623 0, #05060a 55%, #020308 100%);
+  color: #f5f5f7;
+}
+
+.vials {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.vials__eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(243, 244, 255, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.vials__title {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.vials__subtitle {
+  margin: 0.75rem auto 1.75rem;
+  max-width: 24rem;
+  font-size: 0.9rem;
+  color: rgba(243, 244, 255, 0.7);
+}
+
+/* Orbit "stage" */
+.vials__orbit {
+  position: relative;
+  width: min(320px, 88vw);
+  height: 220px;
+  margin: 0 auto;
+}
+
+/* Basin / pensieve at the bottom */
+.vials__basin {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 26%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.2), transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(120,170,255,0.25), transparent 70%);
+  box-shadow:
+    0 0 22px rgba(180, 210, 255, 0.5),
+    0 16px 40px rgba(0, 0, 0, 0.85);
+  opacity: 0.95;
+}
+
+/* Orbiting vials */
+.vials__vial {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: center center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.vials__vial-inner {
+  position: relative;
+  transform-origin: center center;
+}
+
+/* Only styling / glow, no transform animations here */
+.vials__vial .vial {
+  width: 68px;
+  height: auto;
+}
+
+.vials__vial:hover .vial {
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.35));
+}
+
+/* hint */
+.vials__hint {
+  margin-top: 1.75rem;
+  font-size: 0.85rem;
+  color: rgba(243, 244, 255, 0.65);
+}
+
+@media (min-width: 720px) {
+  .screen--vials {
+    padding: 3.5rem 2rem 3.5rem;
+  }
+
+  .vials {
+    max-width: 640px;
+  }
+
+  .vials__title {
+    font-size: 1.7rem;
+  }
+
+  .vials__orbit {
+    width: 360px;
+    height: 240px;
+  }
+
+  .vials__vial .vial {
+    width: 80px;
+  }
+}
