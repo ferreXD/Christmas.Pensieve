@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         radiusXFactor: 0.38,
         radiusYFactor: 0.08,
         scaleMin: 0.65,
-        scaleMax: 1.10
+        scaleMax: 1.20
       });
     }
 

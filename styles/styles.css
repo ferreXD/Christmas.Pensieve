@@ -229,8 +229,9 @@ body {
 
 .vial {
   position: relative;
-  width: 100%;  /* tweak per layout / orbit */
+  width: 100%;
   aspect-ratio: 70 / 190;
+  height: auto !important; /* add this to nuke any inline height */
 }
 
 /* Stack glass and canvas */
@@ -340,7 +341,7 @@ body {
 
 .vials__vial-inner {
   position: relative;
-  transform-origin: center center;
+  transform-origin: 50% 10%; /* "pivot" near cork */
 }
 
 /* Only styling / glow, no transform animations here */
@@ -358,6 +359,16 @@ body {
   margin-top: 1.75rem;
   font-size: 0.85rem;
   color: rgba(243, 244, 255, 0.65);
+}
+
+/* When there is a focused vial, blur the others slightly */
+#vials-orbit.vials--focused .vials__vial:not(.vials__vial--focused) .vial {
+  filter: blur(2px) brightness(1.05); /* no darkening, just soft blur */
+}
+
+/* Give the focused one a stronger glow */
+#vials-orbit.vials--focused .vials__vial.vials__vial--focused .vial {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.5));
 }
 
 @media (min-width: 720px) {
