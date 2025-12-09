@@ -13,7 +13,7 @@
       baseSpeed: options.baseSpeed ?? 0.12,
       scaleMin: options.scaleMin ?? 0.72,
       scaleMax: options.scaleMax ?? 1.06,
-      zoomDuration: options.zoomDuration ?? 1200 // ms, slower zoom
+      zoomDuration: options.zoomDuration ?? 1200 // ms
     };
 
     const TWO_PI = Math.PI * 2;
@@ -27,7 +27,9 @@
           el,
           inner,
           phase: parseFloat(el.dataset.phase || '0') % 1,
-          currentAngle: 0
+          currentAngle: 0,
+          zoomStartAngle: 0,
+          zoomDelta: 0
         };
       })
       .filter(Boolean);
@@ -38,32 +40,59 @@
     let lastTime = 0;
     let animationId = null;
 
-    // global orbit angle, always advancing
+    // global orbit angle, used in orbit mode and for phase realignment
     let orbitAngle = 0;
 
-    // orbit / zoom state machine
-    let mode = 'orbit'; // 'orbit' | 'zooming' | 'focused'
+    // modes: 'orbit' | 'zooming' | 'focused'
+    let mode = 'orbit';
     let focused = null;
 
     const zoom = {
-      startAngle: 0,
-      targetAngle: 0,
       startTime: 0,
-      duration: config.zoomDuration
+      duration: config.zoomDuration,
+      direction: 1 // +1 or -1
     };
 
-    // ---------- helpers ----------
+    // --------- helpers ---------
 
     function updateBounds() {
       rect = orbit.getBoundingClientRect();
     }
 
     function normalizeDelta(delta) {
-      // map delta to shortest path in [-π, π]
       delta = delta % TWO_PI;
       if (delta > Math.PI) delta -= TWO_PI;
       if (delta < -Math.PI) delta += TWO_PI;
       return delta;
+    }
+
+    // distance from `from` to `to` along a given direction (+1 or -1),
+    // always non-negative, in [0, 2π]
+    function directionalDistance(from, to, dir) {
+      let diff = normalizeDelta(to - from);
+      if (dir > 0) {
+        if (diff < 0) diff += TWO_PI;
+      } else {
+        if (diff > 0) diff -= TWO_PI;
+        diff = -diff; // make positive distance in direction -
+      }
+      return diff;
+    }
+
+    // delta from from→to constrained to a given direction:
+    // for dir>0, result in [0, 2π]; for dir<0, result in [-2π, 0]
+    function directionalDelta(from, to, dir) {
+      let diff = to - from;
+      diff = diff % TWO_PI;
+
+      if (dir > 0) {
+        while (diff < 0) diff += TWO_PI;
+        while (diff > TWO_PI) diff -= TWO_PI;
+      } else {
+        while (diff > 0) diff -= TWO_PI;
+        while (diff < -TWO_PI) diff += TWO_PI;
+      }
+      return diff;
     }
 
     function applyPosition(s, angle, cx, cy, rx, ry, timeMs, opts = {}) {
@@ -72,7 +101,6 @@
       const ex = Math.cos(angle) * rx;
       const ey = Math.sin(angle) * ry;
 
-      // depth: bottom of ellipse = "front"
       const depth = (Math.sin(angle) + 1) / 2;
       const baseScale =
         config.scaleMin + depth * (config.scaleMax - config.scaleMin);
@@ -81,11 +109,9 @@
       const breatheEnabled = opts.breathe ?? false;
       const floatEnabled = opts.float ?? false;
 
-      // subtle breathing on scale
       const breatheAmount = breatheEnabled ? 0.02 * Math.sin(timeMs / 260) : 0;
       const scale = baseScale + extraScale + breatheAmount;
 
-      // subtle local float jiggle (around cork-ish)
       let jiggleX = 0;
       let jiggleY = 0;
       let tiltDeg = 0;
@@ -96,11 +122,11 @@
         tiltDeg = 1.5 * Math.sin(timeMs / 900 + 0.7);
       }
 
-      // OUTER: place on ellipse
+      // OUTER: orbit position
       el.style.transform =
         `translate(${cx + ex}px, ${cy + ey}px) translate(-50%, -50%)`;
 
-      // INNER: float + rotate + scale, pivot near cork
+      // INNER: local jiggle/tilt/scale around cork
       inner.style.transform =
         `translate(${jiggleX}px, ${jiggleY}px) rotate(${tiltDeg}deg) scale(${scale})`;
 
@@ -118,47 +144,81 @@
         return;
       }
 
-      // Ignore new focus while zooming
+      // Ignore while zooming
       if (mode === 'zooming') return;
 
-      // Start zoom-in
       focused = targetState;
       mode = 'zooming';
       orbit.classList.add('vials--zooming');
 
-      const currentAngle =
-        focused.currentAngle || (orbitAngle + focused.phase * TWO_PI);
+      // 1) recompute current orbit angle for all vials
+      state.forEach((s) => {
+        const angleNow = orbitAngle + s.phase * TWO_PI;
+        s.currentAngle = angleNow;
+      });
 
-      const targetAngleBase = Math.PI / 2; // bottom/front over basin
-      const delta = normalizeDelta(targetAngleBase - currentAngle);
+      const focusedAngle = focused.currentAngle;
 
-      zoom.startAngle = currentAngle;
-      zoom.targetAngle = currentAngle + delta;
+      // 2) decide target angle for focused vial and global direction
+      const baseTarget = Math.PI / 2; // front center over basin
+      const shortest = normalizeDelta(baseTarget - focusedAngle);
+      const dir = shortest >= 0 ? 1 : -1 || 1; // sign, default to +1
+      zoom.direction = dir;
+
+      const focusedTargetAngle = focusedAngle + shortest;
+
+      // 3) order vials along this direction starting from focused
+      const ordered = [...state].sort((a, b) => {
+        if (a === focused) return -1;
+        if (b === focused) return 1;
+
+        const da = directionalDistance(focusedAngle, a.currentAngle, dir);
+        const db = directionalDistance(focusedAngle, b.currentAngle, dir);
+        return da - db;
+      });
+
+      // 4) assign evenly spaced cluster angles following that order
+      //    offset 0 for focused, then +120°, +240° along direction
+      ordered.forEach((s, index) => {
+        const offset = dir * (index * (TWO_PI / 3));
+        const targetAngle = focusedTargetAngle + offset;
+
+        const start = s.currentAngle;
+        const delta = directionalDelta(start, targetAngle, dir);
+
+        s.zoomStartAngle = start;
+        s.zoomDelta = delta;
+      });
+
       zoom.startTime = performance.now();
     }
 
     function clearFocus() {
       if (!focused) return;
 
-      // Align focused vial back to orbit smoothly (no snap) by updating its phase
-      const angleNow = focused.currentAngle || 0;
-      let rawPhase = (angleNow - orbitAngle) / TWO_PI;
-      rawPhase = rawPhase % 1;
-      if (rawPhase < 0) rawPhase += 1;
-      focused.phase = rawPhase;
+      // re-align phases for ALL vials to their current cluster angles
+      state.forEach((s) => {
+        const angleNow = s.currentAngle || 0;
+        let rawPhase = (angleNow - orbitAngle) / TWO_PI;
+        rawPhase = rawPhase % 1;
+        if (rawPhase < 0) rawPhase += 1;
+        s.phase = rawPhase;
+      });
 
       focused.el.classList.remove('vials__vial--focused');
       orbit.classList.remove('vials--focused');
+      orbit.classList.remove('vials--zooming');
+
       mode = 'orbit';
       focused = null;
     }
 
-    // wire click listeners
+    // click handlers
     vials.forEach((el) => {
       el.addEventListener('click', () => requestFocus(el));
     });
 
-    // ---------- main animation loop ----------
+    // --------- main loop ---------
 
     function frame(timeMs) {
       if (!lastTime) lastTime = timeMs;
@@ -166,7 +226,7 @@
       if (dt > 0.05) dt = 0.05;
       lastTime = timeMs;
 
-      // orbit angle always moves forward
+      // orbitAngle always advances (used when we return to orbit)
       orbitAngle = (orbitAngle + config.baseSpeed * dt * TWO_PI) % TWO_PI;
 
       const width = rect.width;
@@ -179,7 +239,7 @@
       const ry = height * config.radiusYFactor;
 
       if (mode === 'orbit') {
-        // normal orbit: all vials follow the ellipse
+        // normal orbit: equal spacing via phase
         state.forEach((s) => {
           const angle = orbitAngle + s.phase * TWO_PI;
           applyPosition(s, angle, cx, cy, rx, ry, timeMs);
@@ -187,17 +247,15 @@
       } else if (mode === 'zooming' && focused) {
         const elapsed = timeMs - zoom.startTime;
         const progress = Math.min(1, elapsed / zoom.duration);
-        const eased = (1 - Math.cos(progress * Math.PI)) / 2; // smooth in/out
-
-        const angleFocused =
-          zoom.startAngle + (zoom.targetAngle - zoom.startAngle) * eased;
+        const eased = (1 - Math.cos(progress * Math.PI)) / 2;
 
         state.forEach((s) => {
+          const angle = s.zoomStartAngle + s.zoomDelta * eased;
+
           if (s === focused) {
-            // focused vial: slide along ellipse + zoom in
             applyPosition(
               s,
-              angleFocused,
+              angle,
               cx,
               cy,
               rx,
@@ -206,23 +264,28 @@
               { extraScale: 0.16 * eased }
             );
           } else {
-            // others: keep orbiting, so restart never feels "snapped"
-            const angle = orbitAngle + s.phase * TWO_PI;
             applyPosition(s, angle, cx, cy, rx, ry, timeMs);
           }
         });
 
         if (progress >= 1) {
+          // cluster locked in place
+          state.forEach((s) => {
+            const finalAngle = s.zoomStartAngle + s.zoomDelta;
+            s.currentAngle = finalAngle;
+          });
+
           mode = 'focused';
           orbit.classList.remove('vials--zooming');
           orbit.classList.add('vials--focused');
           focused.el.classList.add('vials__vial--focused');
         }
       } else if (mode === 'focused' && focused) {
-        // Focused vial: parked at target angle, breathing + floating
+        // keep cluster frozen; focused one floats/breathes
         state.forEach((s) => {
+          const angle = s.currentAngle;
+
           if (s === focused) {
-            const angle = zoom.targetAngle;
             applyPosition(
               s,
               angle,
@@ -234,8 +297,6 @@
               { extraScale: 0.16, breathe: true, float: true }
             );
           } else {
-            // others still orbit in the background, blurred by CSS
-            const angle = orbitAngle + s.phase * TWO_PI;
             applyPosition(s, angle, cx, cy, rx, ry, timeMs);
           }
         });
