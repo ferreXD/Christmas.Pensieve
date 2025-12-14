@@ -18,8 +18,8 @@
             <span class="page__label">Pensieve Memory Book</span>
         </header>
 
-        <!-- <section class="page__content">
-            <div class="page__handwriting">
+        <section class="page__content">
+            <!-- <div class="page__handwriting">
                 <svg id="khoshnus-main"
                      class="page__handwriting-svg"
                      viewBox="0 0 100 100"
@@ -32,13 +32,13 @@
             </p>
             <p class="page__line page__line--secondary page__handwriting-fallback">
                 These are a few I wanted to save with you.
-            </p>
+            </p> -->
 
             <button class="page__cta" type="button">
                 <canvas class="page__cta-particles"></canvas>
                 <span class="page__cta-label">Enter</span>
             </button>
-        </section> -->
+        </section>
 
         <section class="screen screen--vials" id="screen-vials">
             <div class="vials">
@@ -653,17 +653,14 @@
             </div>
         </section>
 
-
-        <section class="page__content">
-            <div class="vial">
-            </div>
-        </section>
+        <canvas id="page-ripple-canvas" class="page__ripple-canvas" aria-hidden="true"></canvas>
 
         <footer class="page__footer">
             <small class="page__quote">I open at the close.</small>
         </footer>
     </main>
-    
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
     <script src="scripts/particles.js"></script>
     <script src="scripts/cta-particles.js"></script>
     <script src="scripts/vial-threads.js"></script>

@@ -40,6 +40,7 @@ body {
     flex-direction: column;
     justify-content: space-between;
     align-items: stretch;
+    overflow: hidden;
     /* Fondo degradado + vi�eteado */
     background: radial-gradient(circle at top, rgba(212, 175, 55, 0.06), transparent 55%), radial-gradient(circle at bottom, rgba(212, 175, 55, 0.03), transparent 60%), radial-gradient(circle at center, rgba(0, 0, 0, 0.8), #02040a);
 }
@@ -60,6 +61,7 @@ body {
 
 /* Contenido central */
 .page__content {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -68,6 +70,12 @@ body {
     gap: 12px;
     text-align: center;
     padding-inline: 8px;
+    z-index: 1;
+    transition: opacity 1400ms ease-out;
+}
+
+.page__content--gone {
+  display: none;
 }
 
 .page__handwriting {
@@ -265,6 +273,13 @@ body {
 }
 
 .screen--vials {
+  position: fixed;      /* important */
+  inset: 0;             /* fill viewport */
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1400ms ease-out;
+
   min-height: 100vh;
   padding: 2.5rem 1.5rem 3rem;
   display: flex;
@@ -392,4 +407,78 @@ body {
   .vials__vial .vial {
     width: 80px;
   }
+}
+
+/* Screen transitions */
+
+/* Pensieve ripple overlay */
+.page__ripple {
+  position: fixed;
+  width: 200vmax;
+  height: 200vmax;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+
+  /* Origin position controlled via CSS vars */
+  --ripple-x: 50vw;
+  --ripple-y: 50vh;
+  left: calc(var(--ripple-x) - 100vmax);
+  top: calc(var(--ripple-y) - 100vmax);
+
+  transform: scale(0.05);
+  transform-origin: center center;
+
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(190, 215, 255, 0.55) 0%,
+      rgba(150, 190, 255, 0.35) 20%,
+      rgba(70, 100, 160, 0.18) 38%,
+      rgba(4, 6, 14, 0.0) 60%);
+}
+
+/* Solemn expansion of the wave */
+@keyframes pensieve-ripple-wave {
+  0% {
+    opacity: 0;
+    transform: scale(0.05);
+  }
+  10% {
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* When the ripple starts */
+.page.page--ripple .page__ripple {
+  animation: pensieve-ripple-wave 1200ms ease-out forwards;
+}
+
+/* Handwriting page dissolves slightly upward + blur */
+.page.page--ripple .page__content {
+  opacity: 0;
+  filter: blur(1.5px);
+}
+
+/* Let vials start appearing slightly after ripple begins */
+.page.page--vials-active .screen--vials {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.page__ripple-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;   /* CSS size matches viewport */
+  height: 100vh;
+  z-index: 3;
+  pointer-events: none;
 }
