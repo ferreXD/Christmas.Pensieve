@@ -13,34 +13,12 @@
     <canvas id="particles"></canvas>
 
     <!-- Contenido principal -->
-    <main class="page">
+    <main class="page scene">
         <header class="page__header">
             <span class="page__label">Pensieve Memory Book</span>
         </header>
 
-        <section class="page__content">
-            <!-- <div class="page__handwriting">
-                <svg id="khoshnus-main"
-                     class="page__handwriting-svg"
-                     viewBox="0 0 100 100"
-                     xmlns="http://www.w3.org/2000/svg">
-                </svg>
-            </div>
-
-            <p class="page__line page__line--primary page__handwriting-fallback">
-                Some memories are small, but still worth keeping.
-            </p>
-            <p class="page__line page__line--secondary page__handwriting-fallback">
-                These are a few I wanted to save with you.
-            </p> -->
-
-            <button class="page__cta" type="button">
-                <canvas class="page__cta-particles"></canvas>
-                <span class="page__cta-label">Enter</span>
-            </button>
-        </section>
-
-        <section class="screen screen--vials" id="screen-vials">
+        <section id="scene-vials" class="scene__layer scene__layer--vials screen screen--vials">
             <div class="vials">
                 <header class="vials__header">
                 <p class="vials__eyebrow">Bottle up a few thoughts</p>
@@ -57,196 +35,198 @@
                         <!-- Vial 1 -->
                         <button class="vials__vial" data-memory="1" data-phase="0">
                             <div class="vials__vial-inner">
-                                <div class="vial">
-                                    <svg
-                                        class="vial__glass"
-                                        viewBox="0 0 70 190"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        aria-hidden="true"
-                                        >
-                                        <defs>
-                                            <!-- Glass gradient -->
-                                            <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
-                                            <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
-                                            </linearGradient>
+                                <div class="vial__rig">
+                                    <div class="vial">
+                                        <svg
+                                            class="vial__glass"
+                                            viewBox="0 0 70 190"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            aria-hidden="true"
+                                            >
+                                            <defs>
+                                                <!-- Glass gradient -->
+                                                <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                                                <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
+                                                </linearGradient>
 
-                                            <!-- Inner glow -->
-                                            <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
-                                            <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-                                            </radialGradient>
+                                                <!-- Inner glow -->
+                                                <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
+                                                <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                                                </radialGradient>
 
-                                            <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
-                                            <clipPath id="vial-inner-clip">
-                                            <path
+                                                <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
+                                                <clipPath id="vial-inner-clip">
+                                                <path
+                                                    d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 24 30 22
+                                                    L40 22
+                                                    Q43 24 43 28
+                                                    L43 32
+                                                    Q48 36 48 46
+
+                                                    L48 152
+                                                    Q48 160 46 162
+                                                    Q44 164 40 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                    "
+                                                />
+                                                </clipPath>
+                                            </defs>
+
+                                            <!-- Drop shadow -->
+                                            <ellipse
+                                                cx="34"
+                                                cy="178"
+                                                rx="18"
+                                                ry="5"
+                                                fill="rgba(0,0,0,0.45)"
+                                                style="filter: blur(4px);"
+                                            />
+
+                                            <!-- Vial body -->
+                                            <g class="vial__body">
+                                                <!-- Outer glass contour -->
+                                                <path
                                                 d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 24 30 22
-                                                L40 22
-                                                Q43 24 43 28
-                                                L43 32
-                                                Q48 36 48 46
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                                L48 152
-                                                Q48 160 46 162
-                                                Q44 164 40 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
                                                 "
-                                            />
-                                            </clipPath>
-                                        </defs>
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.80)"
+                                                stroke-width="1.8"
+                                                />
 
-                                        <!-- Drop shadow -->
-                                        <ellipse
-                                            cx="34"
-                                            cy="178"
-                                            rx="18"
-                                            ry="5"
-                                            fill="rgba(0,0,0,0.45)"
-                                            style="filter: blur(4px);"
-                                        />
+                                                <!-- Inner glass tint -->
+                                                <path
+                                                d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                        <!-- Vial body -->
-                                        <g class="vial__body">
-                                            <!-- Outer glass contour -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                "
+                                                fill="url(#vial-glass-gradient)"
+                                                opacity="0.48"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.80)"
-                                            stroke-width="1.8"
-                                            />
+                                                <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
+                                                <path
+                                                d="
+                                                    M26 48
+                                                    Q26 38 30 34
+                                                    L30 29
+                                                    Q30 25 32 23
+                                                    L38 23
+                                                    Q40 25 40 29
+                                                    L40 34
+                                                    Q44 38 44 48
 
-                                            <!-- Inner glass tint -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L44 150
+                                                    Q44 156 42.5 159
+                                                    Q41 162 38 163.5
+                                                    L33 163.5
+                                                    Q30 162 28.5 159
+                                                    Q27 156 27 150
+                                                    Z
+                                                "
+                                                fill="rgba(255,255,255,0.10)"
+                                                opacity="0.6"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="url(#vial-glass-gradient)"
-                                            opacity="0.48"
-                                            />
+                                                <!-- LEFT highlight strip -->
+                                                <path
+                                                d="M27.5 52
+                                                    Q26.5 70 27 96
+                                                    Q27.5 120 29.5 138"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.86)"
+                                                stroke-width="1.15"
+                                                stroke-linecap="round"
+                                                opacity="0.9"
+                                                />
 
-                                            <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
-                                            <path
-                                            d="
-                                                M26 48
-                                                Q26 38 30 34
-                                                L30 29
-                                                Q30 25 32 23
-                                                L38 23
-                                                Q40 25 40 29
-                                                L40 34
-                                                Q44 38 44 48
+                                                <!-- RIGHT subtle secondary highlight -->
+                                                <path
+                                                d="M39 54
+                                                    Q39.5 74 39 102
+                                                    Q38.7 124 37.5 140"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.45)"
+                                                stroke-width="0.9"
+                                                stroke-linecap="round"
+                                                opacity="0.85"
+                                                />
 
-                                                L44 150
-                                                Q44 156 42.5 159
-                                                Q41 162 38 163.5
-                                                L33 163.5
-                                                Q30 162 28.5 159
-                                                Q27 156 27 150
-                                                Z
-                                            "
-                                            fill="rgba(255,255,255,0.10)"
-                                            opacity="0.6"
-                                            />
+                                                <!-- Inner glow -->
+                                                <ellipse
+                                                cx="34"
+                                                cy="104"
+                                                rx="13"
+                                                ry="40"
+                                                fill="url(#vial-inner-glow)"
+                                                opacity="0.9"
+                                                />
+                                            </g>
 
-                                            <!-- LEFT highlight strip -->
-                                            <path
-                                            d="M27.5 52
-                                                Q26.5 70 27 96
-                                                Q27.5 120 29.5 138"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.86)"
-                                            stroke-width="1.15"
-                                            stroke-linecap="round"
-                                            opacity="0.9"
-                                            />
+                                            <!-- Cork -->
+                                            <g class="vial__cork" data-part="cork">
+                                                <rect
+                                                x="26"
+                                                y="8"
+                                                width="16"
+                                                height="12"
+                                                rx="2"
+                                                ry="2"
+                                                fill="#b9824a"
+                                                />
+                                                <ellipse
+                                                cx="34"
+                                                cy="8"
+                                                rx="8"
+                                                ry="2.6"
+                                                fill="#c89356"
+                                                />
+                                            </g>
+                                        </svg>
 
-                                            <!-- RIGHT subtle secondary highlight -->
-                                            <path
-                                            d="M39 54
-                                                Q39.5 74 39 102
-                                                Q38.7 124 37.5 140"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.45)"
-                                            stroke-width="0.9"
-                                            stroke-linecap="round"
-                                            opacity="0.85"
-                                            />
-
-                                            <!-- Inner glow -->
-                                            <ellipse
-                                            cx="34"
-                                            cy="104"
-                                            rx="13"
-                                            ry="40"
-                                            fill="url(#vial-inner-glow)"
-                                            opacity="0.9"
-                                            />
-                                        </g>
-
-                                        <!-- Cork -->
-                                        <g class="vial__cork">
-                                            <rect
-                                            x="26"
-                                            y="8"
-                                            width="16"
-                                            height="12"
-                                            rx="2"
-                                            ry="2"
-                                            fill="#b9824a"
-                                            />
-                                            <ellipse
-                                            cx="34"
-                                            cy="8"
-                                            rx="8"
-                                            ry="2.6"
-                                            fill="#c89356"
-                                            />
-                                        </g>
-                                    </svg>
-
-                                    <!-- Canvas where we’ll render the animated threads -->
-                                    <canvas class="vial__threads"></canvas>
+                                        <!-- Canvas where we’ll render the animated threads -->
+                                        <canvas class="vial__threads"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </button>
@@ -254,196 +234,198 @@
                         <!-- Vial 2 -->
                         <button class="vials__vial" data-memory="2" data-phase="0.33">
                             <div class="vials__vial-inner">
-                                <div class="vial">
-                                    <svg
-                                        class="vial__glass"
-                                        viewBox="0 0 70 190"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        aria-hidden="true"
-                                        >
-                                        <defs>
-                                            <!-- Glass gradient -->
-                                            <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
-                                            <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
-                                            </linearGradient>
+                                <div class="vial__rig">
+                                    <div class="vial">
+                                        <svg
+                                            class="vial__glass"
+                                            viewBox="0 0 70 190"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            aria-hidden="true"
+                                            >
+                                            <defs>
+                                                <!-- Glass gradient -->
+                                                <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                                                <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
+                                                </linearGradient>
 
-                                            <!-- Inner glow -->
-                                            <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
-                                            <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-                                            </radialGradient>
+                                                <!-- Inner glow -->
+                                                <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
+                                                <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                                                </radialGradient>
 
-                                            <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
-                                            <clipPath id="vial-inner-clip">
-                                            <path
+                                                <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
+                                                <clipPath id="vial-inner-clip">
+                                                <path
+                                                    d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 24 30 22
+                                                    L40 22
+                                                    Q43 24 43 28
+                                                    L43 32
+                                                    Q48 36 48 46
+
+                                                    L48 152
+                                                    Q48 160 46 162
+                                                    Q44 164 40 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                    "
+                                                />
+                                                </clipPath>
+                                            </defs>
+
+                                            <!-- Drop shadow -->
+                                            <ellipse
+                                                cx="34"
+                                                cy="178"
+                                                rx="18"
+                                                ry="5"
+                                                fill="rgba(0,0,0,0.45)"
+                                                style="filter: blur(4px);"
+                                            />
+
+                                            <!-- Vial body -->
+                                            <g class="vial__body">
+                                                <!-- Outer glass contour -->
+                                                <path
                                                 d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 24 30 22
-                                                L40 22
-                                                Q43 24 43 28
-                                                L43 32
-                                                Q48 36 48 46
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                                L48 152
-                                                Q48 160 46 162
-                                                Q44 164 40 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
                                                 "
-                                            />
-                                            </clipPath>
-                                        </defs>
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.80)"
+                                                stroke-width="1.8"
+                                                />
 
-                                        <!-- Drop shadow -->
-                                        <ellipse
-                                            cx="34"
-                                            cy="178"
-                                            rx="18"
-                                            ry="5"
-                                            fill="rgba(0,0,0,0.45)"
-                                            style="filter: blur(4px);"
-                                        />
+                                                <!-- Inner glass tint -->
+                                                <path
+                                                d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                        <!-- Vial body -->
-                                        <g class="vial__body">
-                                            <!-- Outer glass contour -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                "
+                                                fill="url(#vial-glass-gradient)"
+                                                opacity="0.48"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.80)"
-                                            stroke-width="1.8"
-                                            />
+                                                <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
+                                                <path
+                                                d="
+                                                    M26 48
+                                                    Q26 38 30 34
+                                                    L30 29
+                                                    Q30 25 32 23
+                                                    L38 23
+                                                    Q40 25 40 29
+                                                    L40 34
+                                                    Q44 38 44 48
 
-                                            <!-- Inner glass tint -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L44 150
+                                                    Q44 156 42.5 159
+                                                    Q41 162 38 163.5
+                                                    L33 163.5
+                                                    Q30 162 28.5 159
+                                                    Q27 156 27 150
+                                                    Z
+                                                "
+                                                fill="rgba(255,255,255,0.10)"
+                                                opacity="0.6"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="url(#vial-glass-gradient)"
-                                            opacity="0.48"
-                                            />
+                                                <!-- LEFT highlight strip -->
+                                                <path
+                                                d="M27.5 52
+                                                    Q26.5 70 27 96
+                                                    Q27.5 120 29.5 138"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.86)"
+                                                stroke-width="1.15"
+                                                stroke-linecap="round"
+                                                opacity="0.9"
+                                                />
 
-                                            <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
-                                            <path
-                                            d="
-                                                M26 48
-                                                Q26 38 30 34
-                                                L30 29
-                                                Q30 25 32 23
-                                                L38 23
-                                                Q40 25 40 29
-                                                L40 34
-                                                Q44 38 44 48
+                                                <!-- RIGHT subtle secondary highlight -->
+                                                <path
+                                                d="M39 54
+                                                    Q39.5 74 39 102
+                                                    Q38.7 124 37.5 140"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.45)"
+                                                stroke-width="0.9"
+                                                stroke-linecap="round"
+                                                opacity="0.85"
+                                                />
 
-                                                L44 150
-                                                Q44 156 42.5 159
-                                                Q41 162 38 163.5
-                                                L33 163.5
-                                                Q30 162 28.5 159
-                                                Q27 156 27 150
-                                                Z
-                                            "
-                                            fill="rgba(255,255,255,0.10)"
-                                            opacity="0.6"
-                                            />
+                                                <!-- Inner glow -->
+                                                <ellipse
+                                                cx="34"
+                                                cy="104"
+                                                rx="13"
+                                                ry="40"
+                                                fill="url(#vial-inner-glow)"
+                                                opacity="0.9"
+                                                />
+                                            </g>
 
-                                            <!-- LEFT highlight strip -->
-                                            <path
-                                            d="M27.5 52
-                                                Q26.5 70 27 96
-                                                Q27.5 120 29.5 138"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.86)"
-                                            stroke-width="1.15"
-                                            stroke-linecap="round"
-                                            opacity="0.9"
-                                            />
+                                            <!-- Cork -->
+                                            <g class="vial__cork" data-part="cork">
+                                                <rect
+                                                x="26"
+                                                y="8"
+                                                width="16"
+                                                height="12"
+                                                rx="2"
+                                                ry="2"
+                                                fill="#b9824a"
+                                                />
+                                                <ellipse
+                                                cx="34"
+                                                cy="8"
+                                                rx="8"
+                                                ry="2.6"
+                                                fill="#c89356"
+                                                />
+                                            </g>
+                                        </svg>
 
-                                            <!-- RIGHT subtle secondary highlight -->
-                                            <path
-                                            d="M39 54
-                                                Q39.5 74 39 102
-                                                Q38.7 124 37.5 140"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.45)"
-                                            stroke-width="0.9"
-                                            stroke-linecap="round"
-                                            opacity="0.85"
-                                            />
-
-                                            <!-- Inner glow -->
-                                            <ellipse
-                                            cx="34"
-                                            cy="104"
-                                            rx="13"
-                                            ry="40"
-                                            fill="url(#vial-inner-glow)"
-                                            opacity="0.9"
-                                            />
-                                        </g>
-
-                                        <!-- Cork -->
-                                        <g class="vial__cork">
-                                            <rect
-                                            x="26"
-                                            y="8"
-                                            width="16"
-                                            height="12"
-                                            rx="2"
-                                            ry="2"
-                                            fill="#b9824a"
-                                            />
-                                            <ellipse
-                                            cx="34"
-                                            cy="8"
-                                            rx="8"
-                                            ry="2.6"
-                                            fill="#c89356"
-                                            />
-                                        </g>
-                                    </svg>
-
-                                    <!-- Canvas where we’ll render the animated threads -->
-                                    <canvas class="vial__threads"></canvas>
+                                        <!-- Canvas where we’ll render the animated threads -->
+                                        <canvas class="vial__threads"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </button>
@@ -451,196 +433,198 @@
                         <!-- Vial 3 -->
                         <button class="vials__vial" data-memory="3" data-phase="0.66">
                             <div class="vials__vial-inner">
-                                <div class="vial">
-                                    <svg
-                                        class="vial__glass"
-                                        viewBox="0 0 70 190"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        aria-hidden="true"
-                                        >
-                                        <defs>
-                                            <!-- Glass gradient -->
-                                            <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
-                                            <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
-                                            </linearGradient>
+                                <div class="vial__rig">
+                                    <div class="vial">
+                                        <svg
+                                            class="vial__glass"
+                                            viewBox="0 0 70 190"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            aria-hidden="true"
+                                            >
+                                            <defs>
+                                                <!-- Glass gradient -->
+                                                <linearGradient id="vial-glass-gradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+                                                <stop offset="45%" stop-color="rgba(210,225,255,0.10)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0.25)" />
+                                                </linearGradient>
 
-                                            <!-- Inner glow -->
-                                            <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
-                                            <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
-                                            <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
-                                            <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-                                            </radialGradient>
+                                                <!-- Inner glow -->
+                                                <radialGradient id="vial-inner-glow" cx="50%" cy="55%" r="60%">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.45)" />
+                                                <stop offset="45%" stop-color="rgba(255,255,255,0.18)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                                                </radialGradient>
 
-                                            <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
-                                            <clipPath id="vial-inner-clip">
-                                            <path
+                                                <!-- ClipPath for cylindrical interior (for threads/liquid later) -->
+                                                <clipPath id="vial-inner-clip">
+                                                <path
+                                                    d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 24 30 22
+                                                    L40 22
+                                                    Q43 24 43 28
+                                                    L43 32
+                                                    Q48 36 48 46
+
+                                                    L48 152
+                                                    Q48 160 46 162
+                                                    Q44 164 40 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                    "
+                                                />
+                                                </clipPath>
+                                            </defs>
+
+                                            <!-- Drop shadow -->
+                                            <ellipse
+                                                cx="34"
+                                                cy="178"
+                                                rx="18"
+                                                ry="5"
+                                                fill="rgba(0,0,0,0.45)"
+                                                style="filter: blur(4px);"
+                                            />
+
+                                            <!-- Vial body -->
+                                            <g class="vial__body">
+                                                <!-- Outer glass contour -->
+                                                <path
                                                 d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 24 30 22
-                                                L40 22
-                                                Q43 24 43 28
-                                                L43 32
-                                                Q48 36 48 46
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                                L48 152
-                                                Q48 160 46 162
-                                                Q44 164 40 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
                                                 "
-                                            />
-                                            </clipPath>
-                                        </defs>
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.80)"
+                                                stroke-width="1.8"
+                                                />
 
-                                        <!-- Drop shadow -->
-                                        <ellipse
-                                            cx="34"
-                                            cy="178"
-                                            rx="18"
-                                            ry="5"
-                                            fill="rgba(0,0,0,0.45)"
-                                            style="filter: blur(4px);"
-                                        />
+                                                <!-- Inner glass tint -->
+                                                <path
+                                                d="
+                                                    M22 46
+                                                    Q22 36 27 32
+                                                    L27 28
+                                                    Q27 23 30 20
+                                                    L38 20
+                                                    Q41 23 41 28
+                                                    L41 32
+                                                    Q46 36 46 46
 
-                                        <!-- Vial body -->
-                                        <g class="vial__body">
-                                            <!-- Outer glass contour -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L46 152
+                                                    Q46 160 44 162
+                                                    Q42 164 38 166
+                                                    L30 166
+                                                    Q26 164 24 162
+                                                    Q22 160 22 152
+                                                    Z
+                                                "
+                                                fill="url(#vial-glass-gradient)"
+                                                opacity="0.48"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.80)"
-                                            stroke-width="1.8"
-                                            />
+                                                <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
+                                                <path
+                                                d="
+                                                    M26 48
+                                                    Q26 38 30 34
+                                                    L30 29
+                                                    Q30 25 32 23
+                                                    L38 23
+                                                    Q40 25 40 29
+                                                    L40 34
+                                                    Q44 38 44 48
 
-                                            <!-- Inner glass tint -->
-                                            <path
-                                            d="
-                                                M22 46
-                                                Q22 36 27 32
-                                                L27 28
-                                                Q27 23 30 20
-                                                L38 20
-                                                Q41 23 41 28
-                                                L41 32
-                                                Q46 36 46 46
+                                                    L44 150
+                                                    Q44 156 42.5 159
+                                                    Q41 162 38 163.5
+                                                    L33 163.5
+                                                    Q30 162 28.5 159
+                                                    Q27 156 27 150
+                                                    Z
+                                                "
+                                                fill="rgba(255,255,255,0.10)"
+                                                opacity="0.6"
+                                                />
 
-                                                L46 152
-                                                Q46 160 44 162
-                                                Q42 164 38 166
-                                                L30 166
-                                                Q26 164 24 162
-                                                Q22 160 22 152
-                                                Z
-                                            "
-                                            fill="url(#vial-glass-gradient)"
-                                            opacity="0.48"
-                                            />
+                                                <!-- LEFT highlight strip -->
+                                                <path
+                                                d="M27.5 52
+                                                    Q26.5 70 27 96
+                                                    Q27.5 120 29.5 138"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.86)"
+                                                stroke-width="1.15"
+                                                stroke-linecap="round"
+                                                opacity="0.9"
+                                                />
 
-                                            <!-- INNER "REFRACTION" WALL – subtle offset shape inside -->
-                                            <path
-                                            d="
-                                                M26 48
-                                                Q26 38 30 34
-                                                L30 29
-                                                Q30 25 32 23
-                                                L38 23
-                                                Q40 25 40 29
-                                                L40 34
-                                                Q44 38 44 48
+                                                <!-- RIGHT subtle secondary highlight -->
+                                                <path
+                                                d="M39 54
+                                                    Q39.5 74 39 102
+                                                    Q38.7 124 37.5 140"
+                                                fill="none"
+                                                stroke="rgba(255,255,255,0.45)"
+                                                stroke-width="0.9"
+                                                stroke-linecap="round"
+                                                opacity="0.85"
+                                                />
 
-                                                L44 150
-                                                Q44 156 42.5 159
-                                                Q41 162 38 163.5
-                                                L33 163.5
-                                                Q30 162 28.5 159
-                                                Q27 156 27 150
-                                                Z
-                                            "
-                                            fill="rgba(255,255,255,0.10)"
-                                            opacity="0.6"
-                                            />
+                                                <!-- Inner glow -->
+                                                <ellipse
+                                                cx="34"
+                                                cy="104"
+                                                rx="13"
+                                                ry="40"
+                                                fill="url(#vial-inner-glow)"
+                                                opacity="0.9"
+                                                />
+                                            </g>
 
-                                            <!-- LEFT highlight strip -->
-                                            <path
-                                            d="M27.5 52
-                                                Q26.5 70 27 96
-                                                Q27.5 120 29.5 138"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.86)"
-                                            stroke-width="1.15"
-                                            stroke-linecap="round"
-                                            opacity="0.9"
-                                            />
+                                            <!-- Cork -->
+                                            <g class="vial__cork" data-part="cork">
+                                                <rect
+                                                x="26"
+                                                y="8"
+                                                width="16"
+                                                height="12"
+                                                rx="2"
+                                                ry="2"
+                                                fill="#b9824a"
+                                                />
+                                                <ellipse
+                                                cx="34"
+                                                cy="8"
+                                                rx="8"
+                                                ry="2.6"
+                                                fill="#c89356"
+                                                />
+                                            </g>
+                                        </svg>
 
-                                            <!-- RIGHT subtle secondary highlight -->
-                                            <path
-                                            d="M39 54
-                                                Q39.5 74 39 102
-                                                Q38.7 124 37.5 140"
-                                            fill="none"
-                                            stroke="rgba(255,255,255,0.45)"
-                                            stroke-width="0.9"
-                                            stroke-linecap="round"
-                                            opacity="0.85"
-                                            />
-
-                                            <!-- Inner glow -->
-                                            <ellipse
-                                            cx="34"
-                                            cy="104"
-                                            rx="13"
-                                            ry="40"
-                                            fill="url(#vial-inner-glow)"
-                                            opacity="0.9"
-                                            />
-                                        </g>
-
-                                        <!-- Cork -->
-                                        <g class="vial__cork">
-                                            <rect
-                                            x="26"
-                                            y="8"
-                                            width="16"
-                                            height="12"
-                                            rx="2"
-                                            ry="2"
-                                            fill="#b9824a"
-                                            />
-                                            <ellipse
-                                            cx="34"
-                                            cy="8"
-                                            rx="8"
-                                            ry="2.6"
-                                            fill="#c89356"
-                                            />
-                                        </g>
-                                    </svg>
-
-                                    <!-- Canvas where we’ll render the animated threads -->
-                                    <canvas class="vial__threads"></canvas>
+                                        <!-- Canvas where we’ll render the animated threads -->
+                                        <canvas class="vial__threads"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </button>
@@ -653,18 +637,46 @@
             </div>
         </section>
 
-        <canvas id="page-ripple-canvas" class="page__ripple-canvas" aria-hidden="true"></canvas>
+        <section id="scene-intro" class="scene__layer scene__layer--intro">
+            <div class="page__handwriting">
+                <svg id="khoshnus-main"
+                     class="page__handwriting-svg"
+                     viewBox="0 0 100 100"
+                     xmlns="http://www.w3.org/2000/svg">
+                </svg>
+            </div>
+
+            <p class="page__line page__line--primary page__handwriting-fallback">
+                Some memories are small, but still worth keeping.
+            </p>
+            <p class="page__line page__line--secondary page__handwriting-fallback">
+                These are a few I wanted to save with you.
+            </p>
+
+            <button class="page__cta" type="button">
+                <canvas class="page__cta-particles"></canvas>
+                <span class="page__cta-label">Enter</span>
+            </button>
+        </section>
 
         <footer class="page__footer">
             <small class="page__quote">I open at the close.</small>
         </footer>
+
+        <canvas id="ripple-canvas" class="scene__ripple" aria-hidden="true"></canvas>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
+    <script src="scripts/handwriting.js"></script>
     <script src="scripts/particles.js"></script>
     <script src="scripts/cta-particles.js"></script>
     <script src="scripts/vial-threads.js"></script>
     <script src="scripts/vials-orbit.js"></script>
+    <script src="scripts/ripple-transition.js"></script>
+    
+    <script src="scripts/engine/vial-cork.js"></script>
+    <script src="scripts/engine/vial-tilt.js"></script>
+    <script src="scripts/engine/ceremony-clock.js"></script>
 
     <script type="module" src="scripts/main.js"></script>
 </body>
