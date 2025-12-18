@@ -140,8 +140,6 @@
 
       // If already focused and clicked again → defocus & resume orbit
       if (mode === 'focused' && focused === targetState) {
-        console.log('Defocusing vial', target);
-
         // If target is the cork itself, ignore to allow cork click handling
         if (target?.closest('[data-part="cork"]')) return;
 
