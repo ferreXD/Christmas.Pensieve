@@ -16,8 +16,8 @@
 
     // Text content (can be overridden)
     text: {
-    //   line1: 'Some memories are small, but still worth keeping.',
-    //   line2: 'These are a few I wanted to save with you.',
+        line1: 'Algunos recuerdos no tienen por qué ser grandes para ser importantes.',
+        line2: 'Estos son algunos que no quería perder.'
     },
 
     // Wrapping / layout

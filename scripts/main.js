@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
       autostart: false,
       text: {
         line1: 'Algunos recuerdos no tienen por qué ser grandes para ser importantes.',
-        line2: 'Estos son algunos que no quería perder.',
+        line2: 'Estos son algunos que no quería perder.'
       },
       wrap: { maxCharsPerLine: 30 },
       layout: { baseY: 10, lineSpacing: 14, blockGap: 4 },
