@@ -5,14 +5,22 @@
     tiltPhase: { from: 0.00, to: 0.18 }, // normalized window
     maxTiltDeg: -22, // negative = tilt left; tune by feel
     liftPx: -2,      // subtle lift while tilting
+    onTilt: null, // () => void
   };
 
   function create(userOptions = {}) {
     const cfg = deepMerge(structuredClone(DEFAULTS), userOptions);
 
+    let onTiltApplied = false;
+
     function apply(vialBtn, t) {
       const rig = vialBtn.querySelector(cfg.rigSelector);
       if (!rig) return;
+
+      if (!onTiltApplied) {
+        cfg.onTilt?.();
+        onTiltApplied = true;
+      }
 
       const local = phaseT(t, cfg.tiltPhase.from, cfg.tiltPhase.to);
       // local is 0..1 within phase
@@ -25,6 +33,7 @@
     function reset(vialBtn) {
       const rig = vialBtn.querySelector(cfg.rigSelector);
       if (rig) rig.style.transform = '';
+      onTiltApplied = false;
     }
 
     return { apply, reset, cfg };

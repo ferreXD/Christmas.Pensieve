@@ -46,5 +46,15 @@
     return { ok: true, vialsCount: vials.length };
   }
 
-  global.PensieveVialCork = { init };
+  function disableVial(vialBtn) {
+    if (!vialBtn) return;
+    vialBtn.setAttribute(DEFAULTS.disabledAttr, '1');
+  }
+
+  function enableVial(vialBtn) {
+    if (!vialBtn) return;
+    vialBtn.removeAttribute(DEFAULTS.disabledAttr);
+  }
+
+  global.PensieveVialCork = { init, disableVial, enableVial };
 })(window);

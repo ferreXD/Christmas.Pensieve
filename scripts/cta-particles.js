@@ -1,111 +1,295 @@
-﻿// particles.js
+﻿// scripts/cta-particles.js
+// PensieveCtaParticles
+// - API-fied CTA particle layer with tunable intensity, count, size, speed, glow
+// - Safe lifecycle: create() => { start, stop, destroy, updateConfig, respawn }
+//
+// Usage:
+//   const ctaFx = PensieveCtaParticles.create({
+//     ctaSelector: '.page__cta',
+//     canvasSelector: '.page__cta-particles',
+//     count: 18,
+//     intensity: 1.2,    // overall alpha/glow multiplier
+//     glow: 1.4,         // shadow alpha multiplier
+//     speed: { vx: 0.10, vy: 0.14 }, // base drift magnitudes
+//   });
+//   ctaFx.start();
+//
+//   // Later:
+//   ctaFx.updateConfig({ count: 8, intensity: 0.7 });
+//   ctaFx.respawn();
+
 (function (global) {
-    function initCtaParticles() {
-        const cta = document.querySelector('.page__cta');
-        const canvas = document.querySelector('.page__cta-particles');
+  const DEFAULTS = {
+    ctaSelector: '.page__cta',
+    canvasSelector: '.page__cta-particles',
 
-        if (!cta || !canvas || !canvas.getContext) return;
+    // population
+    count: 12,
 
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let animationId = null;
+    // visual feel (multipliers)
+    intensity: 1.0, // scales particle alpha + glow together
+    glow: 1.0,      // scales shadow alpha (extra bloom)
 
-        function resizeCanvas() {
-            const rect = cta.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
+    // alpha base range (before intensity)
+    alpha: { base: 0.08, depth: 0.18 },
 
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+    // blur (in px) scales with "near" particles
+    blur: { max: 3.0 },
 
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
+    // size model
+    radius: {
+      base: 0.3,
+      depthMul: 0.8,
+    },
 
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // drift model (gentle diagonal upward)
+    // vx: random range around 0, vy: negative/upwards
+    speed: {
+      vx: 0.10, // max horizontal magnitude
+      vy: 0.12, // extra upward magnitude
+      vyBase: 0.04, // baseline upward
+    },
 
-            createParticles(rect.width, rect.height);
-        }
+    // depth range (0..1). higher depth => brighter + bigger.
+    depth: { min: 0.4, max: 1.0 },
 
-        function createParticles(width, height) {
-            particles = [];
+    // wrapping behavior
+    wrap: {
+      // when particle exits top, respawn at bottom
+      respawnOnTop: true,
+    },
+  };
 
-            // Fewer particles
-            const PARTICLE_COUNT = 12;
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
-                particles.push(createSingleParticle(width, height));
-            }
-        }
+  function create(userOptions = {}) {
+    const cfg = deepMerge(structuredClone(DEFAULTS), userOptions);
 
-        function createSingleParticle(width, height) {
-            const depth = 0.4 + Math.random() * 0.6; // 0.4–1
+    const cta = document.querySelector(cfg.ctaSelector);
+    const canvas = document.querySelector(cfg.canvasSelector);
 
-            return {
-                x: Math.random() * width,
-                y: Math.random() * height,
-                depth,
-                // smaller radius overall
-                radius: 0.3 + depth * 0.8,
-                // gentle diagonal drift
-                vx: (Math.random() - 0.5) * 0.10,
-                vy: -0.04 - Math.random() * 0.12
-            };
-        }
+    if (!cta || !canvas || !canvas.getContext) return null;
 
-        function update() {
-            const width = canvas.width / (window.devicePixelRatio || 1);
-            const height = canvas.height / (window.devicePixelRatio || 1);
+    const ctx = canvas.getContext('2d');
 
-            // No dark overlay: keep canvas transparent every frame
-            ctx.clearRect(0, 0, width, height);
+    const state = {
+      running: false,
+      animationId: null,
+      particles: [],
+      dpr: 1,
+      width: 0,
+      height: 0,
+      ro: null,
+      onResizeBound: null,
+    };
 
-            for (let p of particles) {
-                p.x += p.vx;
-                p.y += p.vy;
+    function setConfig(next = {}) {
+      deepMerge(cfg, next);
 
-                // Wrap around
-                if (p.y + p.radius < 0) {
-                    p.y = height + p.radius;
-                    p.x = Math.random() * width;
-                }
-                if (p.x - p.radius > width) {
-                    p.x = -p.radius;
-                } else if (p.x + p.radius < 0) {
-                    p.x = width + p.radius;
-                }
-
-                // White, translucent, similar to background dust
-                const alpha = 0.08 + p.depth * 0.18;  // softer
-                const blur = (1 - p.depth) * 3;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                ctx.shadowColor = `rgba(255, 255, 255, ${alpha * 1.5})`;
-                ctx.shadowBlur = blur;
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-
-            animationId = requestAnimationFrame(update);
-        }
-
-        // keep canvas in sync with layout
-        const resizeObserver = new ResizeObserver(() => {
-            resizeCanvas();
-        });
-        resizeObserver.observe(cta);
-
-        resizeCanvas();
-        update();
-
-        // optional cleanup if you ever navigate away
-        canvas._cleanup = () => {
-            if (animationId !== null) cancelAnimationFrame(animationId);
-            resizeObserver.disconnect();
-        };
+      // If count changed, respawn to match exactly.
+      // (you can choose to not do this automatically; but for “count” it’s intuitive)
+      if (typeof next.count === 'number') {
+        respawn();
+      }
     }
 
-    global.PensieveCtaParticles = {
-        init: initCtaParticles
+    function resizeCanvas() {
+      const rect = cta.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      state.dpr = dpr;
+      state.width = rect.width;
+      state.height = rect.height;
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // keep particles in bounds (or respawn if you prefer)
+      if (!state.particles.length) {
+        createParticles();
+      } else {
+        clampParticlesToBounds();
+      }
+    }
+
+    function clampParticlesToBounds() {
+      const w = state.width;
+      const h = state.height;
+      for (const p of state.particles) {
+        if (p.x < -10) p.x = 0;
+        if (p.x > w + 10) p.x = w;
+        if (p.y < -10) p.y = 0;
+        if (p.y > h + 10) p.y = h;
+      }
+    }
+
+    function createParticles() {
+      state.particles = [];
+      const n = Math.max(0, Math.floor(cfg.count || 0));
+      for (let i = 0; i < n; i++) {
+        state.particles.push(createSingleParticle());
+      }
+    }
+
+    function respawn() {
+      createParticles();
+    }
+
+    function randRange(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function createSingleParticle() {
+      const w = state.width;
+      const h = state.height;
+
+      const depth = randRange(cfg.depth.min, cfg.depth.max); // 0.4–1
+      const radius = cfg.radius.base + depth * cfg.radius.depthMul;
+
+      // vx: centered around 0
+      const vx = (Math.random() - 0.5) * (cfg.speed.vx * 2);
+      // vy: always upward (negative)
+      const vy = -(cfg.speed.vyBase + Math.random() * cfg.speed.vy);
+
+      return {
+        x: Math.random() * w,
+        y: Math.random() * h,
+        depth,
+        radius,
+        vx,
+        vy,
+      };
+    }
+
+    function step() {
+      const w = state.width;
+      const h = state.height;
+
+      // transparent canvas every frame
+      ctx.clearRect(0, 0, w, h);
+
+      const intensity = Math.max(0, cfg.intensity ?? 1);
+      const glowMul = Math.max(0, cfg.glow ?? 1);
+
+      for (const p of state.particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap
+        if (cfg.wrap.respawnOnTop && p.y + p.radius < 0) {
+          p.y = h + p.radius;
+          p.x = Math.random() * w;
+        }
+        if (p.x - p.radius > w) {
+          p.x = -p.radius;
+        } else if (p.x + p.radius < 0) {
+          p.x = w + p.radius;
+        }
+
+        const alphaBase = cfg.alpha.base + p.depth * cfg.alpha.depth;
+        const alpha = clamp01(alphaBase * intensity);
+
+        const blur = (1 - p.depth) * (cfg.blur.max ?? 3);
+
+        ctx.save();
+        ctx.beginPath();
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+
+        // shadow glow
+        const glowAlpha = clamp01(alpha * 1.5 * glowMul);
+        ctx.shadowColor = `rgba(255, 255, 255, ${glowAlpha})`;
+        ctx.shadowBlur = blur;
+
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      state.animationId = requestAnimationFrame(step);
+    }
+
+    function start() {
+      if (state.running) return;
+      state.running = true;
+
+      // resize observers
+      state.ro = new ResizeObserver(resizeCanvas);
+      state.ro.observe(cta);
+
+      state.onResizeBound = () => resizeCanvas();
+      window.addEventListener('resize', state.onResizeBound);
+
+      resizeCanvas();
+      if (!state.particles.length) createParticles();
+
+      state.animationId = requestAnimationFrame(step);
+    }
+
+    function stop() {
+      state.running = false;
+      if (state.animationId !== null) cancelAnimationFrame(state.animationId);
+      state.animationId = null;
+    }
+
+    function destroy() {
+      stop();
+      if (state.ro) state.ro.disconnect();
+      state.ro = null;
+
+      if (state.onResizeBound) window.removeEventListener('resize', state.onResizeBound);
+      state.onResizeBound = null;
+
+      // optional: clear canvas
+      ctx.clearRect(0, 0, state.width, state.height);
+
+      // remove any legacy cleanup hook
+      canvas._cleanup = null;
+    }
+
+    // Backwards compat: keep a cleanup hook on canvas if you like
+    canvas._cleanup = destroy;
+
+    // Optional: auto-start if you want to keep old init() behavior.
+    // (we do NOT auto-start by default; you choose.)
+    return {
+      el: { cta, canvas },
+      cfg,
+      start,
+      stop,
+      destroy,
+      updateConfig: setConfig,
+      respawn,
+      isRunning: () => state.running,
     };
+  }
+
+  function clamp01(x) {
+    return x < 0 ? 0 : x > 1 ? 1 : x;
+  }
+
+  function deepMerge(target, source) {
+    if (!source || typeof source !== 'object') return target;
+    for (const key of Object.keys(source)) {
+      const sv = source[key];
+      const tv = target[key];
+      if (Array.isArray(sv)) target[key] = sv.slice();
+      else if (sv && typeof sv === 'object')
+        target[key] = deepMerge(tv && typeof tv === 'object' ? tv : {}, sv);
+      else if (sv !== undefined) target[key] = sv;
+    }
+    return target;
+  }
+
+  // Keep init() for drop-in compatibility with your original code
+  function init(userOptions = {}) {
+    const api = create(userOptions);
+    api?.start?.();
+    return api;
+  }
+
+  global.PensieveCtaParticles = { create, init };
 })(window);

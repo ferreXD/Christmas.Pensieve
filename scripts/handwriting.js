@@ -5,6 +5,7 @@
 
 (function (global) {
   const DEFAULTS = {
+    autostart: true,
     svgId: 'khoshnus-main',
     // Elements
     selectors: {
@@ -93,7 +94,7 @@
       return { ok: false, reason: 'font-not-found', ...ctx };
     }
 
-    const start = cfg.manuscript.start ?? {
+    const startManuscript = cfg.manuscript.start ?? {
       startStrokeDashoffset: fm.strokeDashoffset,
       startStroke: 'white',
       startStrokeWidth: 0.0000000001,
@@ -118,75 +119,81 @@
       svgId: cfg.svgId,
       font: fm.name,
       fontSize: cfg.manuscript.fontSize,
-      start,
+      start: startManuscript,
       end,
       durations,
     });
 
     cfg.onReady?.({ ...ctx, manuscript });
 
-    // Build lines
-    const maxCharsPerLine = cfg.wrap.maxCharsPerLine;
-    const wrappedLines1 = wrapText(cfg.text.line1, maxCharsPerLine);
-    const wrappedLines2 = wrapText(cfg.text.line2, maxCharsPerLine);
-    const allLines = [...wrappedLines1, ...wrappedLines2];
+    let started = false;
 
-    const { eachLetterDelay, linePause, revealPaddingMs } = cfg.timing;
-    const { baseY, lineSpacing, blockGap } = cfg.layout;
+    function start() {
+      if (started) return;
+      started = true;
 
-    let currentDelay = 0;
-    let totalChars = 0;
+      // Build lines
+      const maxCharsPerLine = cfg.wrap.maxCharsPerLine;
+      const wrappedLines1 = wrapText(cfg.text.line1, maxCharsPerLine);
+      const wrappedLines2 = wrapText(cfg.text.line2, maxCharsPerLine);
+      const allLines = [...wrappedLines1, ...wrappedLines2];
 
-    allLines.forEach((text, index) => {
-      const isSecondBlock = index >= wrappedLines1.length;
-      const y =
-        baseY +
-        index * lineSpacing +
-        (isSecondBlock ? blockGap : 0);
+      const { eachLetterDelay, linePause, revealPaddingMs } = cfg.timing;
+      const { baseY, lineSpacing, blockGap } = cfg.layout;
 
-      manuscript.write(text, {
-        textElementAttributes: {
-          x: '50%',
-          y: `${y}%`,
-          textAnchor: 'middle',
-          dominantBaseline: 'middle',
-        },
-        writeConfiguration: {
-          delayOperation: currentDelay,
-          eachLetterDelay,
-        },
+      let currentDelay = 0;
+      let totalChars = 0;
+
+      allLines.forEach((text, index) => {
+        const isSecondBlock = index >= wrappedLines1.length;
+        const y = baseY + index * lineSpacing + (isSecondBlock ? blockGap : 0);
+
+        manuscript.write(text, {
+          textElementAttributes: {
+            x: '50%',
+            y: `${y}%`,
+            textAnchor: 'middle',
+            dominantBaseline: 'middle',
+          },
+          writeConfiguration: {
+            delayOperation: currentDelay,
+            eachLetterDelay,
+          },
+        });
+
+        totalChars += text.length;
+        currentDelay += text.length * eachLetterDelay + linePause;
       });
 
-      totalChars += text.length;
-      currentDelay += text.length * eachLetterDelay + linePause;
-    });
+      const totalDurationMs = totalChars * eachLetterDelay + revealPaddingMs;
 
-    // Reveal CTA + quote after the handwriting is done (rough estimate).
-    const totalDurationMs = totalChars * eachLetterDelay + revealPaddingMs;
+      // (Optional) if you STILL want to reveal quote later, keep this.
+      // But CTA will no longer be revealed here.
+      revealTimer = setTimeout(() => {
+        if (quote) quote.classList.add('page__quote--visible');
+        cfg.onDone?.({ ...ctx, manuscript, estimatedDurationMs: totalDurationMs });
+      }, totalDurationMs);
 
-    const revealTimer = setTimeout(() => {
-      if (cta) cta.classList.add('page__cta--visible');
-      if (quote) quote.classList.add('page__quote--visible');
-      cfg.onDone?.({ ...ctx, manuscript });
-    }, totalDurationMs);
+      return { estimatedDurationMs: totalDurationMs, lines: allLines };
+    }
+
+    if (cfg.autostart) start();
 
     return {
       ok: true,
       ...ctx,
       manuscript,
+      start,
       stop() {
-        clearTimeout(revealTimer);
-        // no strong cancel API from Manuscript assumed; this only stops reveal.
+        if (revealTimer) clearTimeout(revealTimer);
       },
-      estimatedDurationMs: totalDurationMs,
-      lines: allLines,
     };
   }
 
   function showFallback(ctx) {
     const { fallbackLines, cta, quote } = ctx;
     fallbackLines.forEach(el => (el.style.display = 'block'));
-    if (cta) cta.classList.add('page__cta--visible');
+    // if (cta) cta.classList.add('page__cta--visible');
     if (quote) quote.classList.add('page__quote--visible');
   }
 

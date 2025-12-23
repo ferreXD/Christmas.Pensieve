@@ -3,46 +3,37 @@
     const scene = document.querySelector('.scene');
     const intro = document.querySelector('#scene-intro');
     const vials = document.querySelector('#scene-vials');
-    const cta = intro?.querySelector('.page__cta');
     const canvas = document.querySelector('#ripple-canvas');
 
-    if (!scene || !intro || !vials || !cta || !canvas) return;
+    // CTA is optional now (only used to compute origin if you want)
+    const cta = intro?.querySelector('.page__cta');
+
+    if (!scene || !intro || !vials || !canvas) return null;
 
     const cfg = {
-      // total animation time (prelude + dive)
       durationMs: options.durationMs ?? 1700,
-
-      // fraction of duration dedicated to the “small but alive” prelude
       prelude: options.prelude ?? 0.28,
-
-      // when the real DOM starts fading (as fraction of prelude window)
-      // 0.0 = immediately, 1.0 = at end of prelude
       preludeFadeStart: options.preludeFadeStart ?? 0.70,
-
-      // DOM fade timing
       fadeIntroMs: options.fadeIntroMs ?? 700,
-
-      // vials timing
       vialsFadeInDelayMs: options.vialsFadeInDelayMs ?? 120,
 
-      // normal map controls
       normalUrl: options.normalUrl ?? 'assets/water-normal.png',
       normalScale: options.normalScale ?? 1.35,
       normalSpeed: options.normalSpeed ?? 0.065,
       refractStrength: options.refractStrength ?? 0.024,
 
-      // mask/edge look
       edgeSoftness: options.edgeSoftness ?? 0.06,
       darkWater: options.darkWater ?? [0.02, 0.03, 0.06],
 
-      // prelude ring look
       preludeRingFreq: options.preludeRingFreq ?? 58.0,
       preludeRingSpeed: options.preludeRingSpeed ?? 3.6,
       preludeRingBoost: options.preludeRingBoost ?? 0.70,
 
-      // wavefront accent
       wavefrontBoost: options.wavefrontBoost ?? 0.55,
 
+      // NEW
+      origin: options.origin ?? null,         // {x,y} in px (viewport coords)
+      originSelector: options.originSelector ?? null, // CSS selector to compute origin from
       onEnd: options.onEnd ?? null
     };
 
@@ -52,7 +43,7 @@
     const gl = canvas.getContext('webgl', { premultipliedAlpha: false, alpha: true });
     if (!gl) {
       console.warn('WebGL not supported. Consider using the 2D overlay fallback.');
-      return;
+      return null;
     }
 
     const prog = createProgram(gl, VERT, FRAG);
@@ -67,20 +58,17 @@
       origin: gl.getUniformLocation(prog, 'u_origin'),
       radius: gl.getUniformLocation(prog, 'u_radius'),
       preludeT: gl.getUniformLocation(prog, 'u_preludeT'),
-
       normalScale: gl.getUniformLocation(prog, 'u_normalScale'),
       normalSpeed: gl.getUniformLocation(prog, 'u_normalSpeed'),
       strength: gl.getUniformLocation(prog, 'u_strength'),
       edgeSoft: gl.getUniformLocation(prog, 'u_edgeSoft'),
       darkWater: gl.getUniformLocation(prog, 'u_darkWater'),
-
       preludeRingFreq: gl.getUniformLocation(prog, 'u_preludeRingFreq'),
       preludeRingSpeed: gl.getUniformLocation(prog, 'u_preludeRingSpeed'),
       preludeRingBoost: gl.getUniformLocation(prog, 'u_preludeRingBoost'),
       wavefrontBoost: gl.getUniformLocation(prog, 'u_wavefrontBoost')
     };
 
-    // textures
     const normalTex = gl.createTexture();
     const sceneTex = gl.createTexture();
 
@@ -96,21 +84,44 @@
       normalReady = true;
     });
 
-    cta.addEventListener('click', async () => {
+    function computeOriginPx() {
+      // 1) explicit override in cfg
+      if (cfg.origin && Number.isFinite(cfg.origin.x) && Number.isFinite(cfg.origin.y)) {
+        return { x: cfg.origin.x, y: cfg.origin.y };
+      }
+
+      // 2) selector override
+      if (cfg.originSelector) {
+        const el = document.querySelector(cfg.originSelector);
+        if (el) {
+          const r = el.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }
+      }
+
+      // 3) fallback to CTA center (if exists)
+      if (cta) {
+        const r = cta.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+
+      // 4) ultimate fallback: center of viewport
+      return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    }
+
+    async function start(originPxOverride) {
       if (running) return;
       running = true;
 
       if (document.fonts?.ready) await document.fonts.ready;
 
-      const r = cta.getBoundingClientRect();
-      const originPx = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      const originPx = originPxOverride ?? computeOriginPx();
 
       // Start overlay immediately
       scene.classList.add('is-rippling');
       resizeGLCanvas(canvas, gl);
 
-      // Capture intro ONCE -> scene texture (used during the whole effect)
-      // This capture allows the WebGL overlay to refract something.
+      // Capture intro ONCE -> scene texture
       const snapCanvas = await window.html2canvas(intro, { backgroundColor: null });
       const bmp = await createImageBitmap(snapCanvas);
 
@@ -122,14 +133,13 @@
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
 
-      // Fade the REAL DOM *during late prelude* (not instantly)
+      // Fade DOM (you can later use preludeFadeStart properly; keeping your “immediate” for now)
       intro.style.transition = `opacity 0ms ease, filter 0ms ease`;
       const fadeTimer = setTimeout(() => {
         intro.style.opacity = '0';
         intro.style.filter = 'blur(2px)';
       }, 0);
 
-      // Animate: prelude ripples -> expand into dive
       await run(gl, u, sceneTex, normalTex, originPx, cfg, () => normalReady);
 
       clearTimeout(fadeTimer);
@@ -145,9 +155,14 @@
 
       running = false;
       cfg.onEnd?.();
-    });
-  }
+    }
 
+    return {
+      start,
+      isRunning: () => running
+    };
+  }
+  
   function run(gl, u, sceneTex, normalTex, originPx, cfg, isNormalReady) {
     return new Promise((resolve) => {
       const t0 = performance.now();

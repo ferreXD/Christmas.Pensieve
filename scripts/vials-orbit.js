@@ -13,7 +13,9 @@
       baseSpeed: options.baseSpeed ?? 0.12,
       scaleMin: options.scaleMin ?? 0.72,
       scaleMax: options.scaleMax ?? 1.06,
-      zoomDuration: options.zoomDuration ?? 1200 // ms
+      zoomDuration: options.zoomDuration ?? 1200, // ms
+      onFocus: options.onFocus ?? null,
+      onFocusOut: options.onFocusOut ?? null,
     };
 
     const TWO_PI = Math.PI * 2;
@@ -144,6 +146,7 @@
         if (target?.closest('[data-part="cork"]')) return;
 
         clearFocus();
+        config.onFocusOut?.(vialEl);
         return;
       }
 
@@ -194,6 +197,7 @@
       });
 
       zoom.startTime = performance.now();
+      config.onFocus?.(vialEl);
     }
 
     function clearFocus() {

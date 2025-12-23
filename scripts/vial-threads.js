@@ -8,14 +8,49 @@
 // - Emits “egress” wisps into world coordinates (page space) when they reach the vial bottom while pouring
 // - You can bridge these into a second-layer canvas (e.g., PensieveWispBridge.emit)
 //   via config.egress.onEmit(payload)
+//
+// NEW (requested):
+// - PensieveVialThreads.setResidual(vialButton, { amount })
+//   switches a vial to “remains at the bottom” mode.
 
 (function (global) {
+  // Registry so outside code can affect a specific vial later.
+  // Keyed by the threads canvas element.
+  const REGISTRY = new WeakMap();
+
   function init(selector = '.vial', userConfig = {}) {
     const vials = Array.from(document.querySelectorAll(selector));
     if (!vials.length) return;
 
     const config = buildConfig(userConfig);
     vials.forEach((vialEl) => setupVial(vialEl, config));
+  }
+
+  // Public API: setResidual(vialButton, { amount })
+  // - vialButton can be the <button> or the .vial element itself.
+  function setResidual(vialButton, opts = {}) {
+    const host =
+      vialButton?.classList?.contains('vial')
+        ? vialButton
+        : vialButton?.querySelector?.('.vial');
+
+    const canvas =
+      host?.querySelector?.('.vial__threads') ??
+      vialButton?.querySelector?.('.vial__threads');
+
+    if (!canvas) return;
+
+    const entry = REGISTRY.get(canvas);
+    if (!entry) return;
+
+    const amount = Math.max(2, Math.min(12, Number(opts.amount ?? 6)));
+
+    entry.state.mode = 'residual';
+    entry.state.pour = 0;
+    entry.state.residualCount = amount;
+
+    // Re-seed wisps into a calm bottom band.
+    seedResidual(entry, amount);
   }
 
   const defaultConfig = {
@@ -111,7 +146,6 @@
   }
 
   function lerpAngle(a, b, t) {
-    // shortest-angle interpolation
     const diff = ((b - a + Math.PI) % (2 * Math.PI)) - Math.PI;
     return a + diff * t;
   }
@@ -137,7 +171,6 @@
     inner.width = inner.right - inner.left;
     inner.height = inner.bottom - inner.top;
 
-    // Lock logical canvas size to viewBox
     canvas.width = widthView * dpr;
     canvas.height = heightView * dpr;
     canvas.style.width = '100%';
@@ -150,16 +183,26 @@
     const wisps = createWisps(inner, config);
 
     const state = {
-      pour: 0, // 0..1 driven by ceremony (global)
+      pour: 0,              // 0..1 driven by ceremony
+      mode: 'normal',       // 'normal' | 'residual'
+      residualCount: null,  // if in residual mode, how many wisps to draw/update
     };
 
-    // Control surface used by PensieveVialPour
     vialEl._threadsController = {
       setPour(p) {
         const n = Number(p);
         state.pour = Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+        if (state.pour > 0.001 && state.mode === 'residual') {
+          // if ceremony starts again (you might not allow it, but safe),
+          // snap back to normal simulation
+          state.mode = 'normal';
+          state.residualCount = null;
+        }
       },
     };
+
+    // Register state for external calls (setResidual)
+    REGISTRY.set(canvas, { vialEl, canvas, ctx, inner, wisps, config, state, widthView, heightView });
 
     function createWisps(inner, cfg) {
       const result = [];
@@ -203,8 +246,10 @@
           pourSpan,
           localPour: 0,
 
-          // NEW: per-wisp emission cooldown
           _lastEmitMs: 0,
+
+          // residual helpers
+          _seed: Math.random() * 1000,
         });
       }
 
@@ -221,6 +266,11 @@
     }
 
     function updateWisps(dt, tSec) {
+      if (state.mode === 'residual') {
+        updateResidual(dt, tSec);
+        return;
+      }
+
       const gPour = state.pour;
 
       for (const wisp of wisps) {
@@ -303,6 +353,72 @@
       }
     }
 
+    // Residual mode: tiny, slow, bottom-hugging motion.
+    function updateResidual(dt, tSec) {
+      const count = state.residualCount ?? Math.min(6, wisps.length);
+
+      const bottomBandY = inner.bottom - inner.height * 0.055; // near bottom
+      const bandPx = inner.height * 0.028;                     // thickness
+      const swayPx = inner.width * 0.06;                       // gentle side motion
+
+      for (let idx = 0; idx < wisps.length; idx++) {
+        const wisp = wisps[idx];
+
+        // only animate a few; the rest are effectively “gone”
+        if (idx >= count) {
+          wisp.localPour = 0;
+          continue;
+        }
+
+        const head = wisp.points[0];
+        wisp.localPour = 0;
+
+        // target y oscillates slightly inside bottom band
+        const yTarget =
+          bottomBandY -
+          Math.sin(tSec * 0.8 + wisp._seed) * bandPx;
+
+        head.y += (yTarget - head.y) * (3.2 * dt);
+
+        // subtle x drift
+        const xDrift =
+          Math.sin(tSec * 0.7 + wisp._seed * 0.9) * swayPx;
+
+        const xTarget = clamp(inner.left + 3, inner.right - 3, (inner.left + inner.right) / 2 + xDrift);
+        head.x += (xTarget - head.x) * (2.4 * dt);
+
+        // keep angle mostly horizontal, tiny wobble
+        const horiz = (idx % 2 === 0) ? 0 : Math.PI;
+        const wob = Math.sin(tSec * 0.9 + wisp._seed) * 0.18;
+        wisp.angle = lerpAngle(wisp.angle, horiz + wob, 0.12);
+
+        clampInside(head, inner);
+
+        // shorter, denser chain that sits with the head
+        const pts = wisp.points;
+        const targetLen = wisp.segmentLength;
+
+        for (let i = 1; i < pts.length; i++) {
+          const prev = pts[i - 1];
+          const curr = pts[i];
+
+          const dx = curr.x - prev.x;
+          const dy = curr.y - prev.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+
+          const desiredX = prev.x + (dx / dist) * targetLen;
+          const desiredY = prev.y + (dy / dist) * targetLen;
+
+          const followStrength = 12; // a bit stiffer
+
+          curr.x += (desiredX - curr.x) * followStrength * dt;
+          curr.y += (desiredY - curr.y) * followStrength * dt;
+
+          clampInside(curr, inner);
+        }
+      }
+    }
+
     // NEW: world-space emission when head reaches bottom zone while pouring
     function maybeEmit(timeMs) {
       const eg = config.egress;
@@ -310,6 +426,7 @@
 
       const gPour = state.pour;
       if (gPour <= 0.001) return;
+      if (state.mode === 'residual') return;
 
       const emitZoneStart = inner.bottom - inner.height * (eg.emitZone ?? 0.1);
       const maxPerFrame = eg.maxPerFrame ?? 3;
@@ -331,7 +448,6 @@
         wisp._lastEmitMs = timeMs;
         emitted++;
 
-        // map vial-view coords (0..70,0..190) to page coords
         const nx = head.x / widthView;
         const ny = head.y / heightView;
         const worldX = rect.left + rect.width * nx;
@@ -400,13 +516,18 @@
       ctx.fillRect(inner.left, inner.top, inner.width, inner.height);
 
       updateWisps(dt, tSec);
-
-      // NEW: export a few wisps to world-space travel layer
       maybeEmit(timeMs);
 
       const fadeZoneStart = inner.bottom - inner.height * config.pour.fadeZone;
 
-      for (const wisp of wisps) {
+      const residualCount = state.mode === 'residual'
+        ? (state.residualCount ?? Math.min(6, wisps.length))
+        : wisps.length;
+
+      for (let idx = 0; idx < wisps.length; idx++) {
+        const wisp = wisps[idx];
+        if (idx >= residualCount) continue;
+
         const pts = wisp.points;
 
         ctx.beginPath();
@@ -422,8 +543,11 @@
         const fadeT = clamp01((headY - fadeZoneStart) / (inner.bottom - fadeZoneStart));
         const pourFade = 1 - fadeT * localPour;
 
-        const headAlpha = wisp.baseAlpha * pourFade;
-        const tailAlpha = wisp.baseAlpha * 0.4 * pourFade;
+        // Residual: dimmer + calmer
+        const residualMul = state.mode === 'residual' ? 0.55 : 1.0;
+
+        const headAlpha = wisp.baseAlpha * pourFade * residualMul;
+        const tailAlpha = wisp.baseAlpha * 0.4 * pourFade * residualMul;
 
         const grad = ctx.createLinearGradient(
           pts[0].x,
@@ -435,13 +559,17 @@
         grad.addColorStop(1, `hsla(${wisp.hue}, 70%, 90%, ${tailAlpha})`);
 
         ctx.strokeStyle = grad;
-        ctx.lineWidth = wisp.lineWidth;
+
+        const lw = state.mode === 'residual' ? (wisp.lineWidth * 0.9) : wisp.lineWidth;
+        ctx.lineWidth = lw;
+
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
         const glowDampen = 1 - localPour * 0.35;
+        const glowMul = state.mode === 'residual' ? 0.55 : 1.0;
         ctx.shadowColor = 'rgba(255,255,255,0.9)';
-        ctx.shadowBlur = 7 * glowDampen;
+        ctx.shadowBlur = 7 * glowDampen * glowMul;
 
         ctx.stroke();
       }
@@ -463,5 +591,56 @@
     };
   }
 
-  global.PensieveVialThreads = { init };
+  // Helper: reseed a vial into “bottom remains” composition.
+  function seedResidual(entry, amount) {
+    const { inner, wisps } = entry;
+
+    const count = Math.min(amount, wisps.length);
+
+    const bandY = inner.bottom - inner.height * 0.055;
+    const bandPx = inner.height * 0.028;
+
+    // shorter segments for “resting liquid”
+    const segLen = inner.height * 0.0085;
+
+    for (let i = 0; i < wisps.length; i++) {
+      const w = wisps[i];
+
+      // fade out extras by parking them, they won’t be drawn if i>=count
+      const x = inner.left + 4 + Math.random() * (inner.width - 8);
+      const y = bandY - Math.random() * bandPx;
+
+      // place head
+      w.points[0].x = x;
+      w.points[0].y = y;
+
+      // keep them mostly horizontal
+      w.angle = (i % 2 === 0) ? 0 : Math.PI;
+
+      // calmer look
+      w.segmentLength = segLen;
+      w.speed = randRange(2.2, 4.2);
+      w.baseTurnSpeed = randRange(0.18, 0.28);
+      w.noiseStrength = randRange(0.18, 0.35);
+
+      // keep hue / lw, but slightly dim
+      w.baseAlpha = Math.max(0.18, w.baseAlpha * 0.65);
+      w.lineWidth = Math.max(0.7, w.lineWidth * 0.9);
+
+      w.localPour = 0;
+
+      // rebuild tail points “behind” the head with tiny downward slack
+      for (let j = 1; j < w.points.length; j++) {
+        const p = w.points[j];
+        p.x = x + (Math.random() - 0.5) * 1.5;
+        p.y = y + j * (segLen * 0.55) + Math.random() * 0.6;
+      }
+    }
+  }
+
+  function clamp(min, max, v) {
+    return v < min ? min : v > max ? max : v;
+  }
+
+  global.PensieveVialThreads = { init, setResidual };
 })(window);

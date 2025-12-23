@@ -14,49 +14,21 @@ const MEMORY_CONTENT = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    PensieveHandwriting.init({
-      text: {
-        // line1: 'Some memories are small, but still worth keeping.',
-        // line2: 'These are a few I wanted to save with you.',
-      },
-      wrap: { maxCharsPerLine: 30 },
-      layout: { baseY: 30, lineSpacing: 16, blockGap: 4 },
-      timing: { eachLetterDelay: 100, linePause: 500, revealPaddingMs: 2000 },
-      manuscript: {
-        fontName: 'Pinyon Script',
-        fontSize: '12px',
-        ManuscriptCtor: Manuscript,
-        fontMatrix: FONT_MATRIX,
-      }
-    });
+    let ambienceThreadStarted = false;
 
-    PensieveRippleTransition?.init({
-      durationMs: 0,
-      prelude: 0.33,
-      preludeFadeStart: 0.56,
-      fadeIntroMs: 0,
-
-      normalUrl: 'assets/water-normal.jpeg',
-      normalScale: 1.60,
-      normalSpeed: 0.055,
-      refractStrength: 0.018,
-
-      edgeSoftness: 0.060,
-      darkWater: [0.015, 0.02, 0.04],
-
-      preludeRingFreq: 58.0,
-      preludeRingSpeed: 3.2,
-      preludeRingBoost: 0.92,
-
-      wavefrontBoost: 0.50,
-      onEnd: rippleTransitionCallback
-    });
+    const globalSound = registerGlobalSoundEffects();
+    const ambienceSound = registerAmbienceSoundEffects();
+    const vialSound = registerVialsSoundEffects();
 
     const tilt = PensieveVialTilt.create({
       tiltPhase: { from: 0.00, to: 0.04 }, // normalized window
       maxTiltDeg: 20,  // positive = tilt right
       liftPx: -4,
-      totalDurationMs: 1000
+      totalDurationMs: 1000,
+      onTilt: () => {
+        ambienceThreadStarted = true;
+        vialSound.playAmbience('vials-threads', { volume: 0.08, loop: true, fadeInSec: 3.2 });
+      }
     });
 
     const basinWater = PensieveBasinWater.create({
@@ -65,26 +37,26 @@ document.addEventListener('DOMContentLoaded', () => {
       normalUrl: 'assets/water-normal.jpg',
 
        // Much darker ink base (deep blue-black)
-      darkWater: [0.004, 0.007, 0.016],
+      darkWater: [0.012, 0.021, 0.048],
 
       // Keep texture alive but submerged
       baseMix: 0.48,
-      baseContrast: 1.10,
-      baseBrightness: 0.80,
+      baseContrast: 1.55,
+      baseBrightness: 0.70,
 
       // Bigger “waves” + slower drift
       normalScale: 0.88,
       normalSpeed: 0.015,
-      refractStrength: 0.030,
+      refractStrength: 0.055,
 
       // Add low-frequency drift without getting chaotic
-      secondLayerStrength: 0.60,
-      secondLayerScaleMul: 0.70,
-      secondLayerSpeedMul: 0.30,
+      secondLayerStrength: 0.75,
+      secondLayerScaleMul: 0.85,
+      secondLayerSpeedMul: 0.40,
 
       breathSpeed: 0.65,
-      breathStrength: 0.06,
-      wakeBoost: 0.18,
+      breathStrength: 0.18,
+      wakeBoost: 0.24,
 
       glowTint: [0.14, 0.20, 0.36],
       glowIntensity: 0.075,
@@ -108,25 +80,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // const threadTranslate = PensieveThreadTranslate?.create({
-    //   basinCanvasId: 'basin-canvas',
-    //   basinSelector: '#scene-basin',
-    //   targetY: 0.52,
-    //   alpha: 0.95,
-    //   easing: (t) => t, // keep linear for now
-    // });
-
-    // const pour = PensieveVialPour.create({
-    //   phase: { from: 0.14, to: 0.62 },
-    //   onProgress: (p, { vialButton, t }) => {
-    //     // threadTranslate?.apply(p, { vialButton, t });
-    //   }
-    // });
-
     const camera = PensieveSceneCamera?.create({
       phase: { from: 0.08, to: 0.42 },
       stackSelector: '#scene-stack',
-      travelScreens: 1
+      travelScreens: 1,
+      onProgress: (p) => {
+        // p: 0 (vials) -> 1 (basin)
+        // fade out early so it's gone by the time the basin is on screen
+        const fade = 1 - Math.min(1, Math.max(0, (p - 0.05) / 0.35));
+        document.documentElement.style.setProperty('--particles-opacity', String(fade));
+
+        if (ambienceThreadStarted && p >= 0.66) {
+          ambienceThreadStarted = false;
+          vialSound.stopAmbience('vials-threads', { fadeOut: true, fadeOutSec: 2.6 });
+        }
+      },
     });
 
     const circleForm = PensieveCircleFormation?.create({
@@ -134,10 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
       basinSelector: '#scene-basin',
       phase: { from: 0.52, to: 0.78 },
       ringRadius: 0.335,
-      maxParticles: 54,
+      maxParticles: 64,
 
       // new gentle spawn params
-      spawnRate: 32,
+      spawnRate: 48,
       spawnJitterPx: 4,
       spawnRingBias: 0.62,
       spawnAlphaIn: 0.18,
@@ -193,12 +161,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     let activeCeremony = null;
+    const basinEl = document.querySelector('#scene-basin');
+
+    // Gate so click only works after ceremony ended
+    let basinBackEnabled = false;
+
+    function onBasinClick(ev) {
+      if (!basinBackEnabled) return;
+
+      // optional: ignore clicks on memory-layer content if you want
+      if (ev.target.closest?.('#memory-layer')) return;
+
+      basinBackEnabled = false;
+      returnToVials();
+    }
+
+    basinEl?.addEventListener('click', onBasinClick);
+
+    function animateCameraBack(camera, durationMs = 900, onDone) {
+      const start = performance.now();
+
+      function tick(now) {
+        const p = Math.min(1, (now - start) / durationMs);
+        camera?.applyReverse?.(p);
+        if (p < 1) requestAnimationFrame(tick);
+        else onDone?.();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function returnToVials() {
+      if (!activeCeremony) return;
+
+      const { vialButton, memoryId } = activeCeremony;
+
+      // fully reset the vial pose
+      tilt.reset(vialButton);
+
+      // Leave the vial "uncorked" (open class stays), but disable clicking it from now on
+      PensieveVialCork?.disableVial?.(vialButton);
+
+      // Make the vial contain only a few bottom “residual” threads
+      PensieveVialThreads?.setResidual?.(vialButton, { amount: 6 });
+
+      animateCameraBack(camera, 1800, () => { });
+      // Run a short reverse tilt + camera reset
+      const backClock = CeremonyClock.create({
+        totalDurationMs: 900,
+        onUpdate: ({ t }) => {
+          // t goes 0..1. We want reverse (1..0)
+          // const rev = 1 - t;
+          // tilt.apply(vialButton, rev);
+        },
+        onEnd: () => {
+          // 6) Cleanup ceremony running flag
+          vialButton.classList.remove('is-ceremony-running');
+
+          // 7) Hide/clear memory content immediately (or you can fade it out with a small reveal reset)
+          mediaReveal?.reset();
+          captionReveal?.reset();
+          memoryLayer?.clear?.();
+          circleForm?.stop?.();
+
+          // 8) Drop active ceremony
+          activeCeremony = null;
+        }
+      });
+
+      backClock.start();
+    }
 
     PensieveVialCork?.init({
       allowToggle: false,
       onOpen: ({ vialButton, memoryId }) => {
         // Guard: only one ceremony at a time
         if (activeCeremony?.clock?.isRunning()) return;
+        
+        vialSound.play('cork-pop', { volume: 0.20 });
 
         // Mark running (helps CSS / future modules)
         vialButton.classList.add('is-ceremony-running');
@@ -227,11 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
           onEnd: () => {
             // For now we keep the vial tilted at its final pose.
             // If you want it to “rest” back later, we’ll add a return phase.
-            // pourTravel?.clear?.();
-            // mediaReveal?.reset();
-            // captionReveal?.reset();
-            // memoryLayer?.clear();
             console.log('Ceremony end for memory', memoryId);
+            basinBackEnabled = true;
           }
         });
 
@@ -239,10 +276,79 @@ document.addEventListener('DOMContentLoaded', () => {
         clock.start();
       }
     });
+
+    const cta = document.querySelector('.page__cta');
+
+    const ripple = PensieveRippleTransition?.init({
+      durationMs: 3600,
+      prelude: 0.33,
+      preludeFadeStart: 0.56,
+      vialsFadeInDelayMs: 120,
+      normalUrl: 'assets/water-normal.jpeg',
+      normalScale: 1.60,
+      normalSpeed: 0.055,
+      refractStrength: 0.018,
+      edgeSoftness: 0.060,
+      darkWater: [0.015, 0.02, 0.04],
+      preludeRingFreq: 58.0,
+      preludeRingSpeed: 3.2,
+      preludeRingBoost: 0.92,
+      wavefrontBoost: 0.50,
+      originSelector: '#khoshnus-main',
+      onEnd: () => {
+        rippleTransitionCallback(vialSound);
+        vialSound.playAmbience('vials-orbit', {
+          loop: true,
+          volume: 0.01,
+          fadeInSec: 0.06
+        });
+      }
+    });
+
+    const handwriting = PensieveHandwriting.init({
+      autostart: false,
+      text: {
+        line1: 'Some memories are small, but still worth keeping.',
+        line2: 'These are a few I wanted to save with you.',
+      },
+      wrap: { maxCharsPerLine: 30 },
+      layout: { baseY: 30, lineSpacing: 16, blockGap: 4 },
+      timing: { eachLetterDelay: 100, linePause: 500, revealPaddingMs: 2000 },
+      manuscript: {
+        fontName: 'Pinyon Script',
+        fontSize: '12px',
+        ManuscriptCtor: Manuscript,
+        fontMatrix: FONT_MATRIX,
+      },
+      onDone: () => {
+        // Start ripple immediately when handwriting ends
+        ripple?.start?.();
+        globalSound.stopAmbience({ fadeOut: true, fadeOutSec: 0.25 });
+      }
+    });
+
+    cta?.addEventListener('click', () => {
+      // Unlock audio + start ambience here (gesture-safe)
+      globalSound.unlock();
+
+      // Prevent double clicks
+      cta.disabled = true;
+      cta.style.pointerEvents = 'none';
+      cta.style.opacity = '0';
+
+      // Start the handwriting now
+      handwriting.start?.();
+      globalSound.playAmbience('handwrite', { volume: 0.25, fadeInSec: 0.05 });
+      ambienceSound.playAmbience('pensieve-amb', { volume: 0.03, fadeInSec: 6.0 });
+      // Optional: show quote now or later, your choice
+      document.querySelector('.page__quote')?.classList.add('page__quote--visible');
+    }, { once: true });
+
+    cta?.classList.add('page__cta--visible');
 });
 
 
-function rippleTransitionCallback() {
+function rippleTransitionCallback(sound) {
     if (PensieveParticles) {
         PensieveParticles.init('particles', {
             maxParticles: 70, // puedes bajar a 40 si ves lag
@@ -251,7 +357,11 @@ function rippleTransitionCallback() {
     }
 
     if (PensieveCtaParticles) {
-        PensieveCtaParticles.init();
+        PensieveCtaParticles.init({
+          count: 32,
+          intensity: 1.5,
+          glow: 1.8,
+      });
     }
 
      const wispBridge = PensieveWispBridge?.create({
@@ -290,7 +400,56 @@ function rippleTransitionCallback() {
         radiusXFactor: 0.38,
         radiusYFactor: 0.08,
         scaleMin: 0.65,
-        scaleMax: 1.20
+        scaleMax: 1.20,
+        onFocus: (_) => {
+          sound.stopAmbience();
+          // sound.play('vials-touch', { 
+          //   volume: 0.01,
+          //   playbackRate: 0.95 + Math.random() * 0.1 
+          // });
+        },
+        onFocusOut: (_) => {
+          sound.playAmbience('vials-orbit', {
+            loop: true,
+            volume: 0.01, 
+          });
+        }
       });
     }
+}
+
+function registerAmbienceSoundEffects() {
+  const sound = PensieveSound.create({
+    masterVolume: 0.65,
+    preferWebAudio: true,
+  });
+
+  sound.register('pensieve-amb', { src: 'assets/sfx/pensieve-amb.mp3', loop: true, volume: 0.10 });
+
+  return sound;
+}
+
+function registerGlobalSoundEffects() {
+  const sound = PensieveSound.create({
+    masterVolume: 0.9,
+    preferWebAudio: true,
+  });
+
+  sound.register('handwrite', { src: 'assets/sfx/handwriting-loop.mp3', loop: true, volume: 0.25 });
+
+  return sound;
+}
+
+function registerVialsSoundEffects() {
+  const sound = PensieveSound.create({
+    masterVolume: 0.33,
+    preferWebAudio: true,
+  });
+
+  sound.register('cork-pop', { src: 'assets/sfx/cork-pop.mp3', volume: 0.40 });
+  sound.register('vials-orbit', { src: 'assets/sfx/vials-orbit.wav', loop: true, volume: 0.01 });
+  sound.register('vials-touch', { src: 'assets/sfx/vials-touch.wav', volume: 0.01 });
+  sound.register('vials-threads', { src: 'assets/sfx/vials-threads.mp3', volume: 0.12, loop: true });
+
+  return sound;
 }
