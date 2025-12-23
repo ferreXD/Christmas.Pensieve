@@ -41,7 +41,7 @@ body {
 .page {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
+    min-height: 100dvh;
     padding: 24px 16px;
     display: flex;
     flex-direction: column;
@@ -305,7 +305,7 @@ body {
   pointer-events: none;
   transition: opacity 1400ms ease-out;
 
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 2.5rem 1.5rem 3rem;
   display: flex;
   align-items: center;
@@ -437,7 +437,7 @@ body {
 /* Screen transitions */
 .scene {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* all layers occupy viewport and are NOT in document flow */
@@ -571,7 +571,7 @@ body {
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
 }
 
 /* --- Camera world stack --- */
@@ -583,15 +583,15 @@ body {
   z-index: 1; /* below intro overlay */
 }
 
-/* 2 screens tall: vials at 0..100vh, basin at 100..200vh */
+/* 2 screens tall: vials at 0..100dvh, basin at 100..200dvh */
 .scene__stack {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
-  height: 200vh;
+  height: 200dvh;
 
-  /* Camera drives this variable in pixels: 0..vh */
+  /* Camera drives this variable in pixels: 0..dvh */
   transform: translateY(calc(var(--camera-y, 0px) * -1));
   will-change: transform;
 }
@@ -601,13 +601,13 @@ body {
   position: absolute;
   left: 0;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 /* Place scenes in the stack */
 .scene__stack #scene-vials { top: 0; }
-.scene__stack #scene-basin { top: 100vh; }
+.scene__stack #scene-basin { top: 100dvh; }
 
 /* Basin canvas fills its scene */
 .scene__stack .basin__canvas {
@@ -707,7 +707,7 @@ body {
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   pointer-events: none;
   z-index: 50; /* above stack layers */
 }

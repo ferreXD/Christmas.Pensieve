@@ -88,14 +88,20 @@
     function rand(min, max) { return min + Math.random() * (max - min); }
 
     function resize() {
-      state.dpr = window.devicePixelRatio || 1;
-      const w = Math.max(1, Math.round(window.innerWidth * state.dpr));
-      const h = Math.max(1, Math.round(window.innerHeight * state.dpr));
+      const basin = document.querySelector(cfg.basinSelector);
+      if (!basin) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const r = basin.getBoundingClientRect();
+      const w = Math.max(1, Math.round(r.width * dpr));
+      const h = Math.max(1, Math.round(r.height * dpr));
+
       canvas.width = w;
       canvas.height = h;
-      canvas.style.width = '100vw';
-      canvas.style.height = '100vh';
-      ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+      canvas.style.width = `${r.width}px`;
+      canvas.style.height = `${r.height}px`;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     window.addEventListener('resize', resize);
     resize();
@@ -252,8 +258,8 @@
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
       const minDim = Math.min(basin.width, basin.height);
-      const cx = basin.left + basin.width * cfg.ringCenter.x;
-      const cy = basin.top + basin.height * cfg.ringCenter.y;
+      const cx = basin.width * cfg.ringCenter.x;
+      const cy = basin.height * cfg.ringCenter.y;
 
       // Compute lock progress using the phase window, but don’t stop after it.
       const p = phaseT(state.lastTNorm, cfg.phase.from, cfg.phase.to);

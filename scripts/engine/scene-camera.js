@@ -2,10 +2,10 @@
 (function (global) {
   const DEFAULTS = {
     stackSelector: '#scene-stack',
-    phase: { from: 0.12, to: 0.30 }, // Camera window inside ceremony t (0..1)
+    phase: { from: 0.12, to: 0.30 },
     easing: easeInOutCubic,
-    travelScreens: 1, // 1 viewport down
-    onProgress: null, // (p, { t, travelPx }) => void
+    travelScreens: 1,
+    onProgress: null,
   };
 
   function create(userOptions = {}) {
@@ -13,33 +13,56 @@
     const stack = document.querySelector(cfg.stackSelector);
     if (!stack) return null;
 
-    let travelPx = window.innerHeight * cfg.travelScreens;
+    let travelPx = 0;
 
-    function recalc() {
-      travelPx = window.innerHeight * cfg.travelScreens;
+    function getViewportHeight() {
+      // Visual viewport = what the user actually sees (mobile Chrome navbars, etc.)
+      const vv = window.visualViewport;
+      const h =
+        (vv && vv.height) ||
+        document.documentElement.clientHeight ||
+        window.innerHeight ||
+        0;
+
+      return Math.max(1, Math.round(h));
     }
 
-    window.addEventListener('resize', recalc);
+    function recalc() {
+      travelPx = getViewportHeight() * cfg.travelScreens;
+    }
+
+    // initial calc
+    recalc();
+
+    // Important: mobile UI changes trigger these
+    window.addEventListener('resize', recalc, { passive: true });
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', recalc, { passive: true });
+      vv.addEventListener('scroll', recalc, { passive: true });
+    }
 
     // Core setter: p is absolute 0..1 (NOT ceremony t)
     function applyProgress(p, metaT = null) {
+      // Recalc every tick to track navbar collapse/expand during the animation.
+      // Cheap operation, huge stability win.
+      recalc();
+
       const k = clamp01(p);
       const eased = cfg.easing ? cfg.easing(k) : k;
 
       const y = travelPx * eased;
       stack.style.setProperty('--camera-y', `${y}px`);
 
-      // onProgress keeps receiving something meaningful
       cfg.onProgress?.(eased, { t: metaT, travelPx });
     }
 
-    // Existing API: uses ceremony t + phase window
     function apply(t) {
       const local = phaseT(t, cfg.phase.from, cfg.phase.to);
       applyProgress(local, t);
     }
 
-    // NEW: animate back smoothly using a simple 0..1 progress
     // p=0 -> fully at basin; p=1 -> back to vials
     function applyReverse(p) {
       const k = clamp01(p);

@@ -483,11 +483,11 @@ function registerVialsSoundEffects() {
 
 function registerBasinSoundEffects() {
   const sound = PensieveSound.create({
-    masterVolume: 0.66,
+    masterVolume: 0.40,
     preferWebAudio: true,
   });
 
-  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.66 });
+  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.40 });
   sound.register('fade-in', { src: 'assets/sfx/fade-in.mp3', volume: 0.10 });
 
   return sound;
