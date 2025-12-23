@@ -8,9 +8,9 @@ import { FONT_MATRIX, initialize } from '../vendor/khoshnus/initialize.js';
 
 const MEMORY_CONTENT = {
   // memoryId coming from vial cork open
-  "memory-1": { kind: "image", src: "assets/memories/m1.jpg", caption: "Caption number 1" },
-  "memory-2": { kind: "image", src: "assets/memories/m2.jpg", caption: "Caption number 2" },
-  "memory-3": { kind: "image", src: "assets/memories/m3.jpg", caption: "Caption number 3" },
+  "memory-1": { kind: "image", src: "assets/memories/m1.jpeg", caption: "Una que siempre te hace sonreír" },
+  "memory-2": { kind: "video", src: "assets/memories/m2.mp4", caption: "Tú siendo tú" },
+  "memory-3": { kind: "image", src: "assets/memories/m3.jpeg", caption: "Uno de esos pequeños momentos bonitos" },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -483,11 +483,11 @@ function registerVialsSoundEffects() {
 
 function registerBasinSoundEffects() {
   const sound = PensieveSound.create({
-    masterVolume: 0.40,
+    masterVolume: 0.25,
     preferWebAudio: true,
   });
 
-  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.40 });
+  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.25 });
   sound.register('fade-in', { src: 'assets/sfx/fade-in.mp3', volume: 0.10 });
 
   return sound;
