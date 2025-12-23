@@ -101,25 +101,42 @@
       layer.style.setProperty('--edge-opacity', `${cfg.edgeOpacity}`);
     }
 
+    function positionMedia(geom) {
+      // media is a circle of diameter 2r centered at (cx, cy)
+      mediaHost.style.position = 'absolute';
+      mediaHost.style.left = `${geom.cx}px`;
+      mediaHost.style.top = `${geom.cy}px`;
+      mediaHost.style.width = `${geom.r * 2}px`;
+      mediaHost.style.height = `${geom.r * 2}px`;
+      mediaHost.style.transform = 'translate(-50%, -50%)';
+      mediaHost.style.pointerEvents = 'none';
+
+      // Hard guarantee: media is clipped to the circle.
+      // (Your reveal mask can still run on top; this is the physical crop.)
+      mediaHost.style.overflow = 'hidden';
+      mediaHost.style.borderRadius = '50%';
+    }
+
+
     function positionCaption(geom) {
-      // Place caption below ring bottom, but keep it inside basin bounds.
       const offset = cfg.caption?.offsetPx ?? 18;
       const bottomPad = cfg.caption?.bottomPaddingPx ?? 18;
 
       const ringBottom = geom.cy + geom.r;
       let top = ringBottom + offset;
 
-      // If ring is low and would push caption out of basin, clamp it.
       const maxTop = geom.h - bottomPad - 1;
       top = clamp(0, top, maxTop);
 
       captionHost.style.position = 'absolute';
-      captionHost.style.left = '7.5%';
+      captionHost.style.left = '50%';
       captionHost.style.transform = 'translateX(-50%)';
       captionHost.style.top = `${top}px`;
 
       const maxW = cfg.caption?.maxWidthPx ?? 560;
-      captionHost.style.width = `min(${maxW}px, 86vw)`;
+      const basinWCap = Math.floor(geom.w * 0.86);
+      captionHost.style.width = `${Math.min(maxW, basinWCap)}px`;
+
       captionHost.style.textAlign = 'center';
       captionHost.style.pointerEvents = 'none';
       captionHost.style.fontFamily = 'Pinyon Script';
@@ -127,6 +144,7 @@
       captionHost.style.color = 'white';
       captionHost.style.textShadow = '0 4px 12px rgba(0,0,0,0.45)';
     }
+
 
     function ensureLayerPositioning() {
       // Make sure the layer is a positioning context
@@ -143,6 +161,8 @@
       ensureLayerPositioning();
       const geom = computeGeometry();
       applyCssVars(geom);
+
+      positionMedia(geom);
       positionCaption(geom);
     }
 
@@ -185,6 +205,7 @@
 
       // Build stack container
       const stack = document.createElement('div');
+
       stack.className = 'memory-media__stack';
 
       const sharpWrap = document.createElement('div');
@@ -212,6 +233,24 @@
       } else {
         sharpNode = createImg(src, caption);
         blurNode = createImg(src, caption);
+      }
+
+      stack.style.width = '100%';
+      stack.style.height = '100%';
+      stack.style.position = 'relative';
+
+      sharpWrap.style.position = 'absolute';
+      sharpWrap.style.inset = '0';
+
+      blurWrap.style.position = 'absolute';
+      blurWrap.style.inset = '0';
+
+      // ensure img/video fills the circle
+      for (const node of [sharpNode, blurNode]) {
+        node.style.width = '100%';
+        node.style.height = '100%';
+        node.style.objectFit = 'cover';
+        node.style.display = 'block';
       }
 
       sharpWrap.appendChild(sharpNode);

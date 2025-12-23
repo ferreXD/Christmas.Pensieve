@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalSound = registerGlobalSoundEffects();
     const ambienceSound = registerAmbienceSoundEffects();
     const vialSound = registerVialsSoundEffects();
+    const basinSound = registerBasinSoundEffects();
 
     const tilt = PensieveVialTilt.create({
       tiltPhase: { from: 0.00, to: 0.04 }, // normalized window
@@ -64,10 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
       preferRepeatIfPOT: true
     });
 
+    const memoryWater = PensieveMemoryWater.create({
+      canvasId: 'memory-media',
+      normalUrl: 'assets/water-normal.jpg',
+      normalScale: 0.80,
+      normalSpeed: 0.028,
+      refractStrength: 0.016,
+      wakeBoost: 0.20,
+    });
+
+    let basinSoundStarted = false;
     const basinWake = PensieveBasinWake?.create({
         phase: { from: 0.18, to: 0.50 },
         onWake: (p) => {
           basinWater?.setWake?.(p);
+          memoryWater?.setWake?.(p);
+          if (!basinSoundStarted && p >= 0.32) {
+            basinSoundStarted = true;
+            basinSound.playAmbience('basin-ambience', { volume: 0.66, loop: true, fadeInSec: 0.5 });
+          }
         }
     });
 
@@ -97,11 +113,17 @@ document.addEventListener('DOMContentLoaded', () => {
       },
     });
 
+    const RING = {
+      center: { x: 0.5, y: 0.56 },   // or whatever you want, but ONE truth
+      radius: 0.305,
+    };
+
     const circleForm = PensieveCircleFormation?.create({
       canvasId: 'basin-canvas',      // important: use basin layer canvas
       basinSelector: '#scene-basin',
       phase: { from: 0.52, to: 0.78 },
-      ringRadius: 0.335,
+      ringCenter: RING.center,
+      ringRadius: RING.radius,
       maxParticles: 64,
 
       // new gentle spawn params
@@ -135,10 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const memoryLayer = PensieveMemoryLayer?.create({
       basinSelector: '#scene-basin',
-      ringCenter: { x: 0.215, y: 0.435 },
-      ringRadius: 0.285,
-      featherPx: 20,
-      caption: { offsetPx: 150 }
+      ringCenter: circleForm?.cfg?.ringCenter ??RING.center,
+      ringRadius: circleForm?.cfg?.ringRadius ??RING.radius,
+      featherPx: 20
     });
 
     const mediaReveal = PensieveMemoryReveal?.create({
@@ -198,6 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // fully reset the vial pose
       tilt.reset(vialButton);
+      
+      // Stop basin ambience
+      basinSound.stopAmbience('basin-ambience', { fadeOut: true, fadeOutSec: 1.8 });  
+      basinSoundStarted = false;
 
       // Leave the vial "uncorked" (open class stays), but disable clicking it from now on
       PensieveVialCork?.disableVial?.(vialButton);
@@ -246,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = MEMORY_CONTENT[`memory-${memoryId}`];
         if (content) {
           memoryLayer?.mount({ id: memoryId, ...content });
-          mediaReveal?.reset();
+          memoryWater.setSource({ kind: content.kind, src: content.src });
           captionReveal?.reset();
         }
 
@@ -294,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preludeRingSpeed: 3.2,
       preludeRingBoost: 0.92,
       wavefrontBoost: 0.50,
-      originSelector: '#khoshnus-main',
+      originSelector: '.page__handwriting',
       onEnd: () => {
         rippleTransitionCallback(vialSound);
         vialSound.playAmbience('vials-orbit', {
@@ -308,21 +333,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const handwriting = PensieveHandwriting.init({
       autostart: false,
       text: {
-        line1: 'Some memories are small, but still worth keeping.',
-        line2: 'These are a few I wanted to save with you.',
+        line1: 'Algunos recuerdos no tienen por qué ser grandes para ser importantes.',
+        line2: 'Estos son algunos que no quería perder.',
       },
       wrap: { maxCharsPerLine: 30 },
-      layout: { baseY: 30, lineSpacing: 16, blockGap: 4 },
+      layout: { baseY: 10, lineSpacing: 14, blockGap: 4 },
       timing: { eachLetterDelay: 100, linePause: 500, revealPaddingMs: 2000 },
       manuscript: {
         fontName: 'Pinyon Script',
-        fontSize: '12px',
+        fontSize: '14px',
         ManuscriptCtor: Manuscript,
         fontMatrix: FONT_MATRIX,
       },
       onDone: () => {
         // Start ripple immediately when handwriting ends
-        ripple?.start?.();
+        setTimeout(() => {
+          ripple?.start?.();
+        }, 2000);
         globalSound.stopAmbience({ fadeOut: true, fadeOutSec: 0.25 });
       }
     });
@@ -450,6 +477,18 @@ function registerVialsSoundEffects() {
   sound.register('vials-orbit', { src: 'assets/sfx/vials-orbit.wav', loop: true, volume: 0.01 });
   sound.register('vials-touch', { src: 'assets/sfx/vials-touch.wav', volume: 0.01 });
   sound.register('vials-threads', { src: 'assets/sfx/vials-threads.mp3', volume: 0.12, loop: true });
+
+  return sound;
+}
+
+function registerBasinSoundEffects() {
+  const sound = PensieveSound.create({
+    masterVolume: 0.66,
+    preferWebAudio: true,
+  });
+
+  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.66 });
+  sound.register('fade-in', { src: 'assets/sfx/fade-in.mp3', volume: 0.10 });
 
   return sound;
 }

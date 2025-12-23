@@ -15,17 +15,17 @@
     <!-- Contenido principal -->
     <main class="page scene">
         <header class="page__header">
-            <span class="page__label">Pensieve Memory Book</span>
+            <!-- <span class="page__label">Pensieve Memory Book</span> -->
         </header>
         <div class="scene__world">
             <div class="scene__stack" id="scene-stack">
                 <section id="scene-vials" class="scene__layer scene__layer--vials screen screen--vials">
                     <div class="vials">
                         <header class="vials__header">
-                        <p class="vials__eyebrow">Bottle up a few thoughts</p>
-                        <h2 class="vials__title">Pick a memory vial</h2>
+                        <p class="vials__eyebrow">Pequeños momentos. Auténticos.</p>
+                        <h2 class="vials__title">Elige un recuerdo que quieras revivir</h2>
                         <p class="vials__subtitle">
-                            Each one keeps a different moment.
+                            Cada uno de ellos contiene un momento que me alegro de haber vivido contigo.
                         </p>
                         </header>
 
@@ -633,7 +633,7 @@
                         </div>
 
                         <p class="vials__hint">
-                        Tap a vial to look closer.
+                            Toca uno. Cuando te apetezca.
                         </p>
                     </div>
                 </section>
@@ -646,7 +646,8 @@
                     
                     <!-- NEW: memory content layer -->
                     <div id="memory-layer" class="memory-layer" aria-hidden="true">
-                        <div id="memory-media" class="memory-media memory-reveal" data-reveal="off"></div>
+                        <canvas id="memory-media" class="memory-media memory-reveal" data-reveal="off"></canvas>
+                        <!-- <div id="memory-media" class="memory-media memory-reveal" data-reveal="off"></div> -->
                         <div id="memory-caption" class="memory-caption memory-reveal" data-reveal="off"></div>
                     </div>
                     
@@ -665,15 +666,15 @@
             </div>
 
             <p class="page__line page__line--primary page__handwriting-fallback">
-                Some memories are small, but still worth keeping.
+                Algunos recuerdos no tienen por qué ser grandes para ser importantes.
             </p>
             <p class="page__line page__line--secondary page__handwriting-fallback">
-                These are a few I wanted to save with you.
+                Estos son algunos que no quería perder.
             </p>
 
             <button class="page__cta" type="button">
                 <canvas class="page__cta-particles"></canvas>
-                <span class="page__cta-label">Enter</span>
+                <span class="page__cta-label">Púlsame</span>
             </button>
         </section>
 
@@ -700,6 +701,7 @@
     <script src="scripts/engine/wisp-bridge.js"></script>
     <script src="scripts/engine/thread-translate.js"></script>
     <script src="scripts/engine/scene-camera.js"></script>
+    <script src="scripts/engine/memory-water.js"></script>
     <script src="scripts/engine/memory-reveal.js"></script>
     <script src="scripts/engine/memory-layer.js"></script>
     <script src="scripts/engine/circle-formation.js"></script>

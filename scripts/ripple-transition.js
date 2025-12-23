@@ -6,7 +6,7 @@
     const canvas = document.querySelector('#ripple-canvas');
 
     // CTA is optional now (only used to compute origin if you want)
-    const cta = intro?.querySelector('.page__cta');
+    // const cta = intro?.querySelector('.page__cta');
 
     if (!scene || !intro || !vials || !canvas) return null;
 
@@ -100,10 +100,10 @@
       }
 
       // 3) fallback to CTA center (if exists)
-      if (cta) {
-        const r = cta.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      }
+      // if (cta) {
+      //   const r = cta.getBoundingClientRect();
+      //   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      // }
 
       // 4) ultimate fallback: center of viewport
       return { x: window.innerWidth / 2, y: window.innerHeight / 2 };

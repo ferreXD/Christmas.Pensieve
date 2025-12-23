@@ -43,6 +43,7 @@
       completed: false,
       lastT: 0,
       supportsMask: supportsCssMask(),
+      baseTransform: el.style.transform || ''
     };
 
     // init hidden
@@ -83,7 +84,10 @@
       const blur = cfg.blurPx * (1 - k);
 
       el.style.opacity = String(k);
-      el.style.transform = `translateY(${lift}px) scale(${0.995 + 0.005 * k})`;
+      
+      const base = state.baseTransform ? state.baseTransform + ' ' : '';
+      el.style.transform = `${base}translateY(${lift}px) scale(${0.90})`;
+
       el.style.filter = `blur(${blur}px)`;
     
       // Edge-blur “emerge”: less blur + edge pushed outward as k grows
