@@ -10,7 +10,7 @@ const MEMORY_CONTENT = {
   // memoryId coming from vial cork open
   "memory-1": { kind: "image", src: "assets/memories/m1.jpeg", caption: "Una que siempre te hace sonreír" },
   "memory-2": { kind: "video", src: "assets/memories/m2.mp4", caption: "Tú siendo tú" },
-  "memory-3": { kind: "image", src: "assets/memories/m3.jpeg", caption: "Uno de esos pequeños momentos bonitos" },
+  "memory-3": { kind: "image", src: "assets/memories/m3.jpeg", caption: "Uno de esos pequeños momentos" },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
           memoryWater?.setWake?.(p);
           if (!basinSoundStarted && p >= 0.32) {
             basinSoundStarted = true;
-            basinSound.playAmbience('basin-ambience', { volume: 0.66, loop: true, fadeInSec: 0.5 });
+            basinSound.playAmbience('basin-ambience', { volume: 0.33, loop: true, fadeInSec: 0.5 });
           }
         }
     });
@@ -487,7 +487,7 @@ function registerBasinSoundEffects() {
     preferWebAudio: true,
   });
 
-  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.25 });
+  sound.register('basin-ambience', { src: 'assets/sfx/basin-ambience.mp3', loop: true, volume: 0.33 });
   sound.register('fade-in', { src: 'assets/sfx/fade-in.mp3', volume: 0.10 });
 
   return sound;
